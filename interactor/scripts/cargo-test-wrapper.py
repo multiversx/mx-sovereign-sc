@@ -254,6 +254,39 @@ def filter_output(output: str) -> str:
     return "\n".join(filtered_lines)
 
 
+def write_test_summary(total_tests: int, passed_count: int, failed_count: int, failed_tests: List[str], workspace_root: str):
+    """Write test summary to file for GitHub Actions.
+
+    Args:
+        total_tests: Total number of tests run.
+        passed_count: Number of tests that passed.
+        failed_count: Number of tests that failed.
+        failed_tests: List of failed test names.
+        workspace_root: Root directory of the workspace.
+    """
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        summary_path = os.environ.get("INTERACTOR_TEST_SUMMARY_PATH")
+        if not summary_path:
+            summary_path = os.path.join(workspace_root, "interactor_test_summary.md")
+        else:
+            # If relative path provided, make it relative to workspace root
+            if not os.path.isabs(summary_path):
+                summary_path = os.path.join(workspace_root, summary_path)
+
+        try:
+            with open(summary_path, "w", encoding="utf-8") as f:
+                f.write("## Interactor Test Summary\n\n")
+                f.write(f"- **Total tests**: {total_tests}\n")
+                f.write(f"- **Passed**: {passed_count}\n")
+                f.write(f"- **Failed**: {failed_count}\n\n")
+                if failed_tests:
+                    f.write("### Failed tests\n")
+                    for test_name in failed_tests:
+                        f.write(f"- `{test_name}`\n")
+        except OSError as e:
+            print(f"Warning: Failed to write test summary: {e}", file=sys.stderr)
+
+
 def print_test_output(case_name: str, output: str, exit_code: int):
     """Print output for a completed test case with clear separators.
 
@@ -276,12 +309,13 @@ def print_test_output(case_name: str, output: str, exit_code: int):
     print(f"{'='*80}\n", file=sys.stderr)
 
 
-def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
+def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: str) -> None:
     """Run multiple test cases in parallel with concurrency limit.
 
     Args:
         test_cases: List of test case names to run.
         args: Original cargo test arguments to reuse.
+        workspace_root: Root directory of the workspace.
 
     Exits with 0 if all tests pass, 1 if any fail, 130 on KeyboardInterrupt.
     """
@@ -389,20 +423,7 @@ def run_parallel_tests(test_cases: List[str], args: List[str]) -> None:
             for test_name in failed_tests:
                 print(f"  - {test_name}", file=sys.stderr)
 
-        if os.environ.get("GITHUB_ACTIONS") == "true":
-            summary_path = os.environ.get("INTERACTOR_TEST_SUMMARY_PATH", "interactor_test_summary.md")
-            try:
-                with open(summary_path, "w", encoding="utf-8") as f:
-                    f.write("## Interactor Test Summary\n\n")
-                    f.write(f"- **Total tests**: {total_tests}\n")
-                    f.write(f"- **Passed**: {passed_count}\n")
-                    f.write(f"- **Failed**: {failed_count}\n\n")
-                    if failed_tests:
-                        f.write("### Failed tests\n")
-                        for test_name in failed_tests:
-                            f.write(f"- `{test_name}`\n")
-            except OSError:
-                pass
+        write_test_summary(total_tests, passed_count, failed_count, failed_tests, workspace_root)
 
         overall_exit_code = 0 if failed_count == 0 else 1
         sys.exit(overall_exit_code)
@@ -508,10 +529,16 @@ def main():
         test_cases = discover_test_cases(test_file, INTERACTOR_PACKAGE, workspace_root, filter_test_name)
 
         if test_cases:
-            run_parallel_tests(test_cases, args)
+            run_parallel_tests(test_cases, args, workspace_root)
+        else:
+            # No tests discovered, write empty summary
+            write_test_summary(0, 0, 0, [], workspace_root)
+            sys.exit(1)
 
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
     if port_str:
+        # This is a child process running a specific test (spawned by parallel runner)
+        # Don't write summary here - parent process will write it
         port = int(port_str)
         result = subprocess.run(
             ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
@@ -527,6 +554,7 @@ def main():
             exit_code = run_test(args, script_dir, port, test_file, test_name)
             sys.exit(exit_code)
 
+    # This is a single test execution (not spawned by parallel runner)
     port = find_available_port()
     os.environ["CHAIN_SIMULATOR_PORT"] = str(port)
 
@@ -534,16 +562,26 @@ def main():
     container_name = f"chain-sim-{port}-{os.getpid()}-{int(time.time())}-{random_suffix}"
 
     exit_code = 0
+    test_identifier = test_name if test_name else (test_file if test_file else "unknown")
     try:
         if not start_simulator_container(port, container_name):
             exit_code = 1
-        exit_code = run_test(args, script_dir, port, test_file, test_name)
+        else:
+            exit_code = run_test(args, script_dir, port, test_file, test_name)
+
+        # Write summary for single test execution
+        passed_count = 1 if exit_code == 0 else 0
+        failed_count = 1 if exit_code != 0 else 0
+        failed_tests = [test_identifier] if exit_code != 0 else []
+        write_test_summary(1, passed_count, failed_count, failed_tests, workspace_root)
 
     except KeyboardInterrupt:
         exit_code = 130
+        write_test_summary(1, 0, 1, [test_identifier], workspace_root)
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
+        write_test_summary(1, 0, 1, [test_identifier], workspace_root)
 
     sys.exit(exit_code)
 
