@@ -254,7 +254,9 @@ def filter_output(output: str) -> str:
     return "\n".join(filtered_lines)
 
 
-def write_test_summary(total_tests: int, passed_count: int, failed_count: int, failed_tests: List[str], workspace_root: str):
+def write_test_summary(
+    total_tests: int, passed_count: int, failed_count: int, failed_tests: List[str], workspace_root: str, test_suite_name: Optional[str] = None
+):
     """Write test summary to file for GitHub Actions.
 
     Args:
@@ -263,6 +265,7 @@ def write_test_summary(total_tests: int, passed_count: int, failed_count: int, f
         failed_count: Number of tests that failed.
         failed_tests: List of failed test names.
         workspace_root: Root directory of the workspace.
+        test_suite_name: Optional name of the test suite (for multi-suite runs).
     """
     if os.environ.get("GITHUB_ACTIONS") == "true":
         summary_path = os.environ.get("INTERACTOR_TEST_SUMMARY_PATH")
@@ -274,15 +277,24 @@ def write_test_summary(total_tests: int, passed_count: int, failed_count: int, f
                 summary_path = os.path.join(workspace_root, summary_path)
 
         try:
-            with open(summary_path, "w", encoding="utf-8") as f:
-                f.write("## Interactor Test Summary\n\n")
+            file_exists = os.path.exists(summary_path)
+            mode = "a" if file_exists else "w"
+
+            with open(summary_path, mode, encoding="utf-8") as f:
+                if not file_exists:
+                    f.write("## Interactor Test Summary\n\n")
+
+                if test_suite_name:
+                    f.write(f"### {test_suite_name}\n\n")
+
                 f.write(f"- **Total tests**: {total_tests}\n")
                 f.write(f"- **Passed**: {passed_count}\n")
                 f.write(f"- **Failed**: {failed_count}\n\n")
                 if failed_tests:
-                    f.write("### Failed tests\n")
+                    f.write("#### Failed tests\n")
                     for test_name in failed_tests:
                         f.write(f"- `{test_name}`\n")
+                f.write("\n")
         except OSError as e:
             print(f"Warning: Failed to write test summary: {e}", file=sys.stderr)
 
@@ -309,13 +321,14 @@ def print_test_output(case_name: str, output: str, exit_code: int):
     print(f"{'='*80}\n", file=sys.stderr)
 
 
-def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: str) -> None:
+def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: str, test_file: Optional[str] = None) -> None:
     """Run multiple test cases in parallel with concurrency limit.
 
     Args:
         test_cases: List of test case names to run.
         args: Original cargo test arguments to reuse.
         workspace_root: Root directory of the workspace.
+        test_file: Optional name of the test file (for summary).
 
     Exits with 0 if all tests pass, 1 if any fail, 130 on KeyboardInterrupt.
     """
@@ -423,7 +436,8 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             for test_name in failed_tests:
                 print(f"  - {test_name}", file=sys.stderr)
 
-        write_test_summary(total_tests, passed_count, failed_count, failed_tests, workspace_root)
+        suite_name = test_file if test_file else "Test Suite"
+        write_test_summary(total_tests, passed_count, failed_count, failed_tests, workspace_root, suite_name)
 
         overall_exit_code = 0 if failed_count == 0 else 1
         sys.exit(overall_exit_code)
@@ -529,10 +543,11 @@ def main():
         test_cases = discover_test_cases(test_file, INTERACTOR_PACKAGE, workspace_root, filter_test_name)
 
         if test_cases:
-            run_parallel_tests(test_cases, args, workspace_root)
+            run_parallel_tests(test_cases, args, workspace_root, test_file)
         else:
             # No tests discovered, write empty summary
-            write_test_summary(0, 0, 0, [], workspace_root)
+            suite_name = test_file if test_file else "Test Suite"
+            write_test_summary(0, 0, 0, [], workspace_root, suite_name)
             sys.exit(1)
 
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
@@ -573,15 +588,18 @@ def main():
         passed_count = 1 if exit_code == 0 else 0
         failed_count = 1 if exit_code != 0 else 0
         failed_tests = [test_identifier] if exit_code != 0 else []
-        write_test_summary(1, passed_count, failed_count, failed_tests, workspace_root)
+        suite_name = test_file if test_file else "Single Test"
+        write_test_summary(1, passed_count, failed_count, failed_tests, workspace_root, suite_name)
 
     except KeyboardInterrupt:
         exit_code = 130
-        write_test_summary(1, 0, 1, [test_identifier], workspace_root)
+        suite_name = test_file if test_file else "Single Test"
+        write_test_summary(1, 0, 1, [test_identifier], workspace_root, suite_name)
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
-        write_test_summary(1, 0, 1, [test_identifier], workspace_root)
+        suite_name = test_file if test_file else "Single Test"
+        write_test_summary(1, 0, 1, [test_identifier], workspace_root, suite_name)
 
     sys.exit(exit_code)
 
