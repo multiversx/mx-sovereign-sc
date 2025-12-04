@@ -64,7 +64,7 @@ jobs:
         env:
           PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
           WORKSPACE_ROOT: ${{ github.workspace }}
-          MAX_TEST_CONCURRENCY: "2"
+          MAX_TEST_CONCURRENCY: "4"
           GITHUB_ACTIONS: "true"
         run: |
           cargo test --package rust-interact --test complete_flow_tests --all-features || true
@@ -86,7 +86,7 @@ jobs:
         env:
           PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
           WORKSPACE_ROOT: ${{ github.workspace }}
-          MAX_TEST_CONCURRENCY: "2"
+          MAX_TEST_CONCURRENCY: "4"
           GITHUB_ACTIONS: "true"
         run: |
           cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features || true

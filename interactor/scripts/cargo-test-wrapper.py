@@ -316,51 +316,6 @@ def filter_output(output: str) -> str:
     return "\n".join(filtered_lines)
 
 
-def write_test_summary(
-    total_tests: int, passed_count: int, failed_count: int, failed_tests: List[str], workspace_root: str, test_suite_name: Optional[str] = None
-):
-    """Write test summary to file for GitHub Actions.
-
-    Args:
-        total_tests: Total number of tests run.
-        passed_count: Number of tests that passed.
-        failed_count: Number of tests that failed.
-        failed_tests: List of failed test names.
-        workspace_root: Root directory of the workspace.
-        test_suite_name: Optional name of the test suite (for multi-suite runs).
-    """
-    if os.environ.get("GITHUB_ACTIONS") == "true":
-        summary_path = os.environ.get("INTERACTOR_TEST_SUMMARY_PATH")
-        if not summary_path:
-            summary_path = os.path.join(workspace_root, "interactor_test_summary.md")
-        else:
-            # If relative path provided, make it relative to workspace root
-            if not os.path.isabs(summary_path):
-                summary_path = os.path.join(workspace_root, summary_path)
-
-        try:
-            file_exists = os.path.exists(summary_path)
-            mode = "a" if file_exists else "w"
-
-            with open(summary_path, mode, encoding="utf-8") as f:
-                if not file_exists:
-                    f.write("## Interactor Test Summary\n\n")
-
-                if test_suite_name:
-                    f.write(f"### {test_suite_name}\n\n")
-
-                f.write(f"- **Total tests**: {total_tests}\n")
-                f.write(f"- **Passed**: {passed_count}\n")
-                f.write(f"- **Failed**: {failed_count}\n\n")
-                if failed_tests:
-                    f.write("#### Failed tests\n")
-                    for test_name in failed_tests:
-                        f.write(f"- `{test_name}`\n")
-                f.write("\n")
-        except OSError as e:
-            print(f"Warning: Failed to write test summary: {e}", file=sys.stderr)
-
-
 def print_test_output(case_name: str, output: str, exit_code: int):
     """Print output for a completed test case with clear separators.
 
@@ -529,9 +484,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             print(f"\nFailed tests:", file=sys.stderr)
             for test_name in failed_tests:
                 print(f"  - {test_name}", file=sys.stderr)
-
-        suite_name = test_file if test_file else "Test Suite"
-        write_test_summary(total_tests, passed_count, failed_count, failed_tests, workspace_root, suite_name)
 
         overall_exit_code = 0 if failed_count == 0 else 1
         sys.exit(overall_exit_code)
@@ -719,9 +671,6 @@ def main():
         if test_cases:
             run_parallel_tests(test_cases, args, workspace_root, test_file)
         else:
-            # No tests discovered, write empty summary
-            suite_name = test_file if test_file else "Test Suite"
-            write_test_summary(0, 0, 0, [], workspace_root, suite_name)
             sys.exit(1)
 
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
@@ -756,7 +705,6 @@ def main():
     container_name = f"chain-sim-{port}-{os.getpid()}-{int(time.time())}-{random_suffix}"
 
     exit_code = 0
-    test_identifier = test_name if test_name else (test_file if test_file else "unknown")
     try:
         if not start_simulator_container(port, container_name):
             exit_code = 1
@@ -766,26 +714,15 @@ def main():
         if container_name:
             cleanup_container(container_name)
 
-        # Write summary for single test execution
-        passed_count = 1 if exit_code == 0 else 0
-        failed_count = 1 if exit_code != 0 else 0
-        failed_tests = [test_identifier] if exit_code != 0 else []
-        suite_name = test_file if test_file else "Single Test"
-        write_test_summary(1, passed_count, failed_count, failed_tests, workspace_root, suite_name)
-
     except KeyboardInterrupt:
         if container_name:
             cleanup_container(container_name)
         exit_code = 130
-        suite_name = test_file if test_file else "Single Test"
-        write_test_summary(1, 0, 1, [test_identifier], workspace_root, suite_name)
     except Exception as e:
         if container_name:
             cleanup_container(container_name)
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
-        suite_name = test_file if test_file else "Single Test"
-        write_test_summary(1, 0, 1, [test_identifier], workspace_root, suite_name)
 
     sys.exit(exit_code)
 
