@@ -4,11 +4,13 @@ Full lifecycle wrapper for interactor tests
 Called by the cargo wrapper script when an interactor test is detected
 """
 
+import fcntl
 import os
 import random
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -137,43 +139,103 @@ def find_available_port() -> int:
 
     Generates a port based on PID, timestamp, and random component,
     then verifies it's not in use by checking socket binding and Docker.
+    Uses a lock file to prevent race conditions in parallel execution.
 
     Returns:
         An available port number between 1024 and 65535.
 
     Raises:
-        SystemExit: If no available port is found after 100 attempts.
+        SystemExit: If no available port is found after 200 attempts.
     """
     base_port = 8085
-    port = base_port + (os.getpid() % 1000) + (int(time.time()) % 1000) + random.randint(0, 99)
+    # Use a wider range to avoid collisions in parallel execution
+    port = base_port + (os.getpid() % 5000) + (int(time.time() * 1000) % 5000) + random.randint(0, 999)
 
     while port < 1024 or port > 65535:
-        port = base_port + (port % 1000) + random.randint(0, 99)
+        port = base_port + (port % 5000) + random.randint(0, 999)
+
+    # Use a lock file to prevent race conditions
+    lock_file_path = os.path.join(tempfile.gettempdir(), f"port_lock_{port}.lock")
+    lock_file = None
 
     attempts = 0
-    while attempts < 100:
+    while attempts < 200:  # Increased attempts for better reliability
+        # Check if port is available via socket binding
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             sock.bind(("localhost", port))
             sock.close()
         except OSError:
-            port += 1
+            port = base_port + (port % 5000) + random.randint(0, 999)
+            if port < 1024 or port > 65535:
+                port = base_port + (port % 5000) + random.randint(0, 999)
             attempts += 1
             continue
 
-        result = subprocess.run(["docker", "ps", "--filter", f"publish={port}", "--format", "{{.ID}}"], capture_output=True, text=True, check=False)
+        # Check Docker containers using both publish filter and name pattern
+        result = subprocess.run(
+            ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.ID}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
 
         if result.returncode == 0 and result.stdout.strip():
-            port += 1
+            port = base_port + (port % 5000) + random.randint(0, 999)
+            if port < 1024 or port > 65535:
+                port = base_port + (port % 5000) + random.randint(0, 999)
             attempts += 1
             continue
 
-        break
+        # Try to acquire lock on this port
+        try:
+            lock_file = open(lock_file_path, "w")
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            # Double-check Docker after acquiring lock
+            result = subprocess.run(
+                ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.ID}}"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                lock_file.close()
+                try:
+                    os.remove(lock_file_path)
+                except OSError:
+                    pass
+                port = base_port + (port % 5000) + random.randint(0, 999)
+                if port < 1024 or port > 65535:
+                    port = base_port + (port % 5000) + random.randint(0, 999)
+                attempts += 1
+                continue
+            # Port is available, lock acquired
+            break
+        except (IOError, OSError):
+            # Lock acquisition failed, port might be in use
+            if lock_file:
+                lock_file.close()
+            port = base_port + (port % 5000) + random.randint(0, 999)
+            if port < 1024 or port > 65535:
+                port = base_port + (port % 5000) + random.randint(0, 999)
+            attempts += 1
+            continue
 
-    if port > 65535:
-        print("Failed to find available port after 100 attempts", file=sys.stderr)
+    if port > 65535 or attempts >= 200:
+        if lock_file:
+            lock_file.close()
+            try:
+                os.remove(lock_file_path)
+            except OSError:
+                pass
+        print("Failed to find available port after 200 attempts", file=sys.stderr)
         sys.exit(1)
 
+    # Lock will be released when process exits, but we keep it for now
+    # The lock file will be cleaned up on process exit
     return port
 
 
@@ -338,6 +400,7 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
     processes = {}
     completed_processes = set()
     exit_codes = {}
+    container_names = {}  # Track containers for cleanup
     test_index = 0
 
     try:
@@ -381,6 +444,22 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
 
                     print_test_output(case_name, output, exit_code)
 
+                    # Cleanup container for this test
+                    # Extract port from output or environment if available
+                    # Try to find container by test identifier
+                    test_port = None
+                    for line in output.split("\n"):
+                        if "CHAIN_SIMULATOR_PORT" in line or "TEST_PORT" in line:
+                            # Try to extract port
+                            pass
+                        if "chain-sim-" in line.lower():
+                            # Try to extract container name
+                            pass
+
+                    # Cleanup all containers matching this test's pattern
+                    # Since each test creates its own container, we'll clean up by port
+                    # The child process should handle its own cleanup, but we'll do a final sweep
+
                     if test_index < len(test_cases):
                         next_case_name = test_cases[test_index]
                         case_args = list(args)
@@ -409,6 +488,21 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
 
             if len(completed_processes) < len(test_cases):
                 time.sleep(0.1)
+
+        # Final cleanup: only for local runs (GitHub Actions handles cleanup via workflow)
+        if not should_skip_cleanup():
+            # Wait a moment for child processes to finish their cleanup
+            time.sleep(1)
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                for container_name in result.stdout.strip().split("\n"):
+                    if container_name.strip():
+                        cleanup_container(container_name.strip())
 
         passed_tests = []
         failed_tests = []
@@ -450,7 +544,85 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
+        # Cleanup containers on interrupt (only for local runs)
+        if not should_skip_cleanup():
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                for container_name in result.stdout.strip().split("\n"):
+                    if container_name.strip():
+                        cleanup_container(container_name.strip())
         sys.exit(130)
+
+
+def should_skip_cleanup() -> bool:
+    """Check if cleanup should be skipped (e.g., in GitHub Actions where cleanup is handled by workflow).
+
+    Returns:
+        True if cleanup should be skipped, False otherwise.
+    """
+    return os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def cleanup_container(container_name: str) -> None:
+    """Stop and remove a Docker container.
+
+    Args:
+        container_name: Name of the container to clean up.
+    """
+    # Skip cleanup in GitHub Actions - workflow handles it
+    if should_skip_cleanup():
+        return
+
+    # Check if container exists before attempting cleanup
+    check_result = subprocess.run(
+        ["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=5,
+    )
+
+    if check_result.returncode != 0 or not check_result.stdout.strip():
+        # Container doesn't exist, nothing to clean up
+        return
+
+    try:
+        subprocess.run(
+            ["docker", "stop", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=10,
+        )
+        subprocess.run(
+            ["docker", "rm", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        # Force kill if stop times out
+        subprocess.run(
+            ["docker", "kill", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        subprocess.run(
+            ["docker", "rm", "-f", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except Exception:
+        # Ignore errors during cleanup
+        pass
 
 
 def start_simulator_container(port: int, container_name: str) -> bool:
@@ -477,6 +649,8 @@ def start_simulator_container(port: int, container_name: str) -> bool:
 
     if not wait_for_simulator(port, container_name):
         print("Chain simulator failed to start after 30 seconds", file=sys.stderr)
+        # Skip cleanup in Actions - workflow will handle it
+        cleanup_container(container_name)
         return False
 
     return True
@@ -551,10 +725,12 @@ def main():
             sys.exit(1)
 
     port_str = os.environ.get("CHAIN_SIMULATOR_PORT")
+    container_name = None
     if port_str:
         # This is a child process running a specific test (spawned by parallel runner)
-        # Don't write summary here - parent process will write it
+        # Each child creates its own container, so we need to track it for cleanup
         port = int(port_str)
+        # Check if container already exists (shouldn't happen in normal flow)
         result = subprocess.run(
             ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
             capture_output=True,
@@ -567,6 +743,9 @@ def main():
             if not wait_for_simulator(port, container_name, max_attempts=5):
                 print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
             exit_code = run_test(args, script_dir, port, test_file, test_name)
+            # Cleanup this container (each child manages its own)
+            if container_name:
+                cleanup_container(container_name)
             sys.exit(exit_code)
 
     # This is a single test execution (not spawned by parallel runner)
@@ -583,6 +762,9 @@ def main():
             exit_code = 1
         else:
             exit_code = run_test(args, script_dir, port, test_file, test_name)
+        # Cleanup container after test completes
+        if container_name:
+            cleanup_container(container_name)
 
         # Write summary for single test execution
         passed_count = 1 if exit_code == 0 else 0
@@ -592,10 +774,14 @@ def main():
         write_test_summary(1, passed_count, failed_count, failed_tests, workspace_root, suite_name)
 
     except KeyboardInterrupt:
+        if container_name:
+            cleanup_container(container_name)
         exit_code = 130
         suite_name = test_file if test_file else "Single Test"
         write_test_summary(1, 0, 1, [test_identifier], workspace_root, suite_name)
     except Exception as e:
+        if container_name:
+            cleanup_container(container_name)
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
         suite_name = test_file if test_file else "Single Test"

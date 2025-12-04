@@ -64,10 +64,31 @@ jobs:
         env:
           PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
           WORKSPACE_ROOT: ${{ github.workspace }}
-          MAX_TEST_CONCURRENCY: "4"
+          MAX_TEST_CONCURRENCY: "2"
           GITHUB_ACTIONS: "true"
         run: |
           cargo test --package rust-interact --test complete_flow_tests --all-features || true
+          
+      - name: Cleanup containers after first test suite
+        if: always()
+        run: |
+          # Clean up containers from first test suite before starting second
+          CONTAINERS=$(docker ps -a --filter "name=chain-sim-" --format "{{.ID}}")
+          if [ -n "$CONTAINERS" ]; then
+            echo "Cleaning up containers: $CONTAINERS"
+            docker stop $CONTAINERS || true
+            docker rm -f $CONTAINERS || true
+          fi
+          # Wait a moment for ports to be released
+          sleep 2
+
+      - name: Run second interactor test suite
+        env:
+          PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
+          WORKSPACE_ROOT: ${{ github.workspace }}
+          MAX_TEST_CONCURRENCY: "2"
+          GITHUB_ACTIONS: "true"
+        run: |
           cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features || true
 
       - name: Cleanup chain simulator containers
@@ -76,17 +97,8 @@ jobs:
           # Remove only the per-test chain simulator containers created by the wrapper
           CONTAINERS=$(docker ps -a --filter "name=chain-sim-" --format "{{.ID}}")
           if [ -n "$CONTAINERS" ]; then
-            docker rm -f $CONTAINERS
-          fi
-
-      - name: Interactor test summary
-        if: always()
-        run: |
-          if [ -f "${{ github.workspace }}/interactor_test_summary.md" ]; then
-            cat "${{ github.workspace }}/interactor_test_summary.md" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "## Interactor Test Summary" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "⚠️ Summary file not found. Tests may have failed before summary could be written." >> "$GITHUB_STEP_SUMMARY"
+            echo "Final cleanup of containers: $CONTAINERS"
+            docker stop $CONTAINERS || true
+            docker rm -f $CONTAINERS || true
           fi
   
