@@ -399,22 +399,6 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
 
                     print_test_output(case_name, output, exit_code)
 
-                    # Cleanup container for this test
-                    # Extract port from output or environment if available
-                    # Try to find container by test identifier
-                    test_port = None
-                    for line in output.split("\n"):
-                        if "CHAIN_SIMULATOR_PORT" in line or "TEST_PORT" in line:
-                            # Try to extract port
-                            pass
-                        if "chain-sim-" in line.lower():
-                            # Try to extract container name
-                            pass
-
-                    # Cleanup all containers matching this test's pattern
-                    # Since each test creates its own container, we'll clean up by port
-                    # The child process should handle its own cleanup, but we'll do a final sweep
-
                     if test_index < len(test_cases):
                         next_case_name = test_cases[test_index]
                         case_args = list(args)
@@ -444,20 +428,8 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             if len(completed_processes) < len(test_cases):
                 time.sleep(0.1)
 
-        # Final cleanup: only for local runs (GitHub Actions handles cleanup via workflow)
-        if not should_skip_cleanup():
-            # Wait a moment for child processes to finish their cleanup
-            time.sleep(1)
-            result = subprocess.run(
-                ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.Names}}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                for container_name in result.stdout.strip().split("\n"):
-                    if container_name.strip():
-                        cleanup_container(container_name.strip())
+        # Wait for all child processes to finish
+        time.sleep(1)
 
         passed_tests = []
         failed_tests = []
@@ -485,6 +457,11 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             for test_name in failed_tests:
                 print(f"  - {test_name}", file=sys.stderr)
 
+        # Final cleanup at the end of the process
+        # In GitHub Actions: only clean up containers from this process
+        # In local: comprehensive cleanup (all containers, networks, volumes)
+        cleanup_all_docker_resources()
+
         overall_exit_code = 0 if failed_count == 0 else 1
         sys.exit(overall_exit_code)
 
@@ -496,28 +473,11 @@ def run_parallel_tests(test_cases: List[str], args: List[str], workspace_root: s
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
-        # Cleanup containers on interrupt (only for local runs)
-        if not should_skip_cleanup():
-            result = subprocess.run(
-                ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.Names}}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                for container_name in result.stdout.strip().split("\n"):
-                    if container_name.strip():
-                        cleanup_container(container_name.strip())
+        # Final cleanup at the end of the process (even on interrupt)
+        # In GitHub Actions: only clean up containers from this process
+        # In local: comprehensive cleanup (all containers, networks, volumes)
+        cleanup_all_docker_resources()
         sys.exit(130)
-
-
-def should_skip_cleanup() -> bool:
-    """Check if cleanup should be skipped (e.g., in GitHub Actions where cleanup is handled by workflow).
-
-    Returns:
-        True if cleanup should be skipped, False otherwise.
-    """
-    return os.environ.get("GITHUB_ACTIONS") == "true"
 
 
 def cleanup_container(container_name: str) -> None:
@@ -526,10 +486,6 @@ def cleanup_container(container_name: str) -> None:
     Args:
         container_name: Name of the container to clean up.
     """
-    # Skip cleanup in GitHub Actions - workflow handles it
-    if should_skip_cleanup():
-        return
-
     # Check if container exists before attempting cleanup
     check_result = subprocess.run(
         ["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"],
@@ -577,6 +533,101 @@ def cleanup_container(container_name: str) -> None:
         pass
 
 
+def is_github_actions() -> bool:
+    """Check if running in GitHub Actions environment.
+
+    Returns:
+        True if running in GitHub Actions, False otherwise.
+    """
+    return os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def cleanup_all_docker_resources(container_name: Optional[str] = None) -> None:
+    """Clean up Docker resources created by tests.
+
+    In GitHub Actions: Only cleans up the specified container (or containers matching current PID).
+    In local runs: Performs comprehensive cleanup of all chain-sim- containers, networks, and volumes.
+
+    Args:
+        container_name: Optional specific container name to clean up. If None and in GitHub Actions,
+            only cleans up containers matching the current process PID.
+    """
+    try:
+        if is_github_actions():
+            # In GitHub Actions: only clean up containers from this process
+            if container_name:
+                # Clean up specific container
+                cleanup_container(container_name)
+            else:
+                # Clean up containers matching current PID pattern
+                current_pid = os.getpid()
+                result = subprocess.run(
+                    ["docker", "ps", "-a", "--filter", f"name=chain-sim-", "--format", "{{.Names}}"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=10,
+                )
+
+                if result.returncode == 0 and result.stdout.strip():
+                    for name in result.stdout.strip().split("\n"):
+                        if name.strip() and f"-{current_pid}-" in name:
+                            cleanup_container(name.strip())
+        else:
+            # Local runs: comprehensive cleanup
+            # Clean up all chain-sim- containers
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--filter", "name=chain-sim-", "--format", "{{.ID}}"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=10,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                container_ids = result.stdout.strip().split("\n")
+                for container_id in container_ids:
+                    if container_id.strip():
+                        try:
+                            subprocess.run(
+                                ["docker", "stop", container_id.strip()],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                check=False,
+                                timeout=10,
+                            )
+                            subprocess.run(
+                                ["docker", "rm", "-f", container_id.strip()],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                check=False,
+                                timeout=10,
+                            )
+                        except Exception:
+                            pass
+
+            # Clean up dangling networks
+            subprocess.run(
+                ["docker", "network", "prune", "-f"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=30,
+            )
+
+            # Clean up dangling volumes
+            subprocess.run(
+                ["docker", "volume", "prune", "-f"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=30,
+            )
+    except Exception:
+        # Ignore errors during cleanup
+        pass
+
+
 def start_simulator_container(port: int, container_name: str) -> bool:
     """Start the chain simulator Docker container and wait for it to be ready.
 
@@ -601,7 +652,6 @@ def start_simulator_container(port: int, container_name: str) -> bool:
 
     if not wait_for_simulator(port, container_name):
         print("Chain simulator failed to start after 30 seconds", file=sys.stderr)
-        # Skip cleanup in Actions - workflow will handle it
         cleanup_container(container_name)
         return False
 
@@ -679,23 +729,47 @@ def main():
         # This is a child process running a specific test (spawned by parallel runner)
         # Each child creates its own container, so we need to track it for cleanup
         port = int(port_str)
-        # Check if container already exists (shouldn't happen in normal flow)
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            container_name = result.stdout.strip().split("\n")[0]
-            print(f"Using existing chain simulator container '{container_name}' on port {port}", file=sys.stderr)
-            if not wait_for_simulator(port, container_name, max_attempts=5):
-                print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
-            exit_code = run_test(args, script_dir, port, test_file, test_name)
-            # Cleanup this container (each child manages its own)
+        exit_code = 0
+
+        try:
+            # Check if container already exists (shouldn't happen in normal flow)
+            result = subprocess.run(
+                ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                container_name = result.stdout.strip().split("\n")[0]
+                print(f"Using existing chain simulator container '{container_name}' on port {port}", file=sys.stderr)
+                if not wait_for_simulator(port, container_name, max_attempts=5):
+                    print(f"Warning: Container {container_name} on port {port} may not be ready", file=sys.stderr)
+            else:
+                # Create a new container for this child process
+                random_suffix = random.randint(1000, 9999)
+                container_name = f"chain-sim-{port}-{os.getpid()}-{int(time.time())}-{random_suffix}"
+                if not start_simulator_container(port, container_name):
+                    exit_code = 1
+                    container_name = None
+
+            if exit_code == 0 and container_name:
+                exit_code = run_test(args, script_dir, port, test_file, test_name)
+        except KeyboardInterrupt:
+            exit_code = 130
+        except Exception as e:
+            print(f"Unexpected error: {e}", file=sys.stderr)
+            exit_code = 1
+        finally:
+            # Final cleanup at the end of the child process (always runs)
             if container_name:
-                cleanup_container(container_name)
-            sys.exit(exit_code)
+                if is_github_actions():
+                    cleanup_all_docker_resources(container_name)
+                else:
+                    cleanup_container(container_name)
+                    # Additional comprehensive cleanup for local runs
+                    cleanup_all_docker_resources()
+
+        sys.exit(exit_code)
 
     # This is a single test execution (not spawned by parallel runner)
     port = find_available_port()
@@ -710,19 +784,20 @@ def main():
             exit_code = 1
         else:
             exit_code = run_test(args, script_dir, port, test_file, test_name)
-        # Cleanup container after test completes
-        if container_name:
-            cleanup_container(container_name)
-
     except KeyboardInterrupt:
-        if container_name:
-            cleanup_container(container_name)
         exit_code = 130
     except Exception as e:
-        if container_name:
-            cleanup_container(container_name)
         print(f"Unexpected error: {e}", file=sys.stderr)
         exit_code = 1
+    finally:
+        # Final cleanup at the end of the process (always runs)
+        if container_name:
+            if is_github_actions():
+                cleanup_all_docker_resources(container_name)
+            else:
+                cleanup_container(container_name)
+                # Additional comprehensive cleanup for local runs
+                cleanup_all_docker_resources()
 
     sys.exit(exit_code)
 
