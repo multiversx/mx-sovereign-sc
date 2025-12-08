@@ -27,6 +27,7 @@ use structs::configs::{
     UpdateEsdtSafeConfigOperation,
 };
 use structs::forge::ScArray;
+use structs::OperationHashStatus;
 use structs::{
     aliases::{OptionalValueTransferDataTuple, PaymentsVec},
     configs::EsdtSafeConfig,
@@ -439,6 +440,44 @@ impl MvxEsdtSafeTestState {
 
         self.common_setup
             .assert_expected_error_message(result, expected_error_message);
+    }
+
+    pub fn register_and_execute_operation(
+        &mut self,
+        operation: &Operation<StaticApi>,
+        hash_of_hashes: &ManagedBuffer<StaticApi>,
+        signature: ManagedBuffer<StaticApi>,
+        num_validators: usize,
+        expected_logs: Vec<ExpectedLogs>,
+        check_status: bool,
+    ) {
+        let epoch = 0;
+        let operation_hash = self.common_setup.get_operation_hash(operation);
+        let bitmap = self.common_setup.full_bitmap(num_validators as u64);
+
+        let operations_hashes =
+            MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
+
+        self.common_setup.register_operation(
+            OWNER_ADDRESS,
+            signature,
+            hash_of_hashes,
+            bitmap,
+            epoch,
+            operations_hashes,
+        );
+
+        if check_status {
+            self.common_setup
+                .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
+        }
+
+        self.execute_operation(hash_of_hashes, operation, expected_logs);
+
+        if check_status {
+            self.common_setup
+                .check_operation_hash_status_is_empty(&operation_hash);
+        }
     }
 
     pub fn execute_operation(
