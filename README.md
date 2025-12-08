@@ -25,6 +25,29 @@ Contracts that deploy and run a validator-signed bridge between MultiversX and a
 - **Fee handling:** Deposits can require an upfront fee payment that is forwarded to `mvx-fee-market::subtractFee`. The MultiversX fee market also exposes bridge-controlled operations to set/remove fees, distribute balances, and manage a whitelist; these paths are guarded by the Header Verifier just like token transfers.
 - **Pause and safeguards:** Both safes can be paused; setup phases must be completed before normal bridge operations proceed; hash locking in the Header Verifier prevents duplicate execution and enforces operation nonces.
 
+## Siren Diagram
+
+```
+Sovereign Creator
+      |
+      v  deploy phases
+sovereign-forge -> chain-factory ----------------------+
+      |                |                               |
+      |                +--> chain-config (validators)  |
+      |                +--> mvx-esdt-safe (vault)      |
+      |                +--> mvx-fee-market (fees)      |
+      |                +--> header-verifier (owner) <--+
+      |
+Sovereign Chain                                          MultiversX
+------------------                                       -------------------
+  sov-esdt-safe (burn & emit) ----> Validators sign ----> header-verifier
+                                                         |    |
+  sov-fee-market (fees)     <---- fee lookups ----- mvx-esdt-safe -- mvx-fee-market
+                                                         |
+                                  executeBridgeOps <-----+
+                                  (mint/unlock/SC calls)
+```
+
 > For more details about the Cross-Chain Execution, please take a look at the [official documentation](https://docs.multiversx.com/sovereign/cross-chain-execution). 
 
 ## Development
