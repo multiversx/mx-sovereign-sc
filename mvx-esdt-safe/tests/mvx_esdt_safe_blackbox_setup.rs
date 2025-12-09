@@ -449,7 +449,7 @@ impl MvxEsdtSafeTestState {
         signature: ManagedBuffer<StaticApi>,
         num_validators: usize,
         expected_logs: Vec<ExpectedLogs>,
-        check_status: bool,
+        check_hash_status: bool,
     ) {
         let epoch = 0;
         let operation_hash = self.common_setup.get_operation_hash(operation);
@@ -467,14 +467,14 @@ impl MvxEsdtSafeTestState {
             operations_hashes,
         );
 
-        if check_status {
+        if check_hash_status {
             self.common_setup
                 .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
         }
 
         self.execute_operation(hash_of_hashes, operation, expected_logs);
 
-        if check_status {
+        if check_hash_status {
             self.common_setup
                 .check_operation_hash_status_is_empty(&operation_hash);
         }

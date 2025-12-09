@@ -3515,7 +3515,7 @@ fn test_execute_operation_partial_execution() {
     let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
-        OWNER_ADDRESS,
+        USER_ADDRESS,
         signature,
         &hash_of_hashes,
         bitmap,
