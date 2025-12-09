@@ -1683,16 +1683,13 @@ fn test_execute_operation_success() {
         ),
     );
 
-    let operation_hash = state.common_setup.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
         None,
     );
 
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
@@ -1721,27 +1718,16 @@ fn test_execute_operation_success() {
         None,
     );
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
     let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
 
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -1789,8 +1775,6 @@ fn test_execute_operation_transfer_data_gas_limit_too_high_with_payments() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
 
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
@@ -1814,32 +1798,20 @@ fn test_execute_operation_transfer_data_gas_limit_too_high_with_payments() {
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![log!(
         EXECUTE_BRIDGE_OPS_ENDPOINT,
         topics: [EXECUTED_BRIDGE_OP_EVENT],
         data: Some(GAS_LIMIT_TOO_HIGH)
     )];
 
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -1885,16 +1857,13 @@ fn test_execute_operation_with_native_token_success() {
         ),
     );
 
-    let operation_hash = state.common_setup.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
         None,
     );
 
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
@@ -1913,28 +1882,16 @@ fn test_execute_operation_with_native_token_success() {
         .complete_header_verifier_setup_phase(None);
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
 
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 
     state.common_setup.check_account_single_esdt(
         TESTING_SC_ADDRESS.to_address(),
@@ -2076,14 +2033,13 @@ fn test_execute_no_transfer_data_no_token_transfer() {
         ),
     );
 
-    let operation_hash = state.common_setup.get_operation_hash(&operation);
-    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
         None,
     );
 
+    let operation_hash = state.common_setup.get_operation_hash(&operation);
+    let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let (signature, public_keys) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
 
     state.common_setup.register(
@@ -2104,32 +2060,20 @@ fn test_execute_no_transfer_data_no_token_transfer() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![log!(
         EXECUTE_BRIDGE_OPS_ENDPOINT,
         topics: [EXECUTED_BRIDGE_OP_EVENT],
         data: Some(NOTHING_TO_TRANSFER)
     )];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -2165,8 +2109,6 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
 
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
@@ -2192,23 +2134,15 @@ fn test_execute_operation_only_transfer_data_no_fee() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
     let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
-
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -2244,8 +2178,6 @@ fn test_execute_operation_only_transfer_data_gas_limit_too_high() {
 
     let operation_hash = state.common_setup.get_operation_hash(&operation);
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
 
     state.common_setup.deploy_chain_config(
         OptionalValue::Some(SovereignConfig::default_config_for_test()),
@@ -2271,27 +2203,20 @@ fn test_execute_operation_only_transfer_data_gas_limit_too_high() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
     let expected_logs = vec![log!(
         EXECUTE_BRIDGE_OPS_ENDPOINT,
         topics: [EXECUTED_BRIDGE_OP_EVENT],
         data: Some(GAS_LIMIT_TOO_HIGH)
     )];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -2792,29 +2717,16 @@ fn test_execute_operation_no_payments() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT])];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -2874,31 +2786,18 @@ fn test_execute_operation_no_payments_failed_event() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![
         log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(INVALID_FUNCTION_NOT_FOUND)),
     ];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
+    );
 }
 
 /// ### TEST
@@ -2970,45 +2869,28 @@ fn test_execute_operation_native_token_failed_event() {
 
     state.common_setup.deploy_testing_sc();
 
-    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
-    let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
-
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        epoch,
-        operations_hashes,
-    );
-
-    state
-        .common_setup
-        .check_operation_hash_status(&operation_hash, OperationHashStatus::NotLocked);
-
     let expected_logs = vec![
         log!(EXECUTE_OPERATION_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(INVALID_FUNCTION_NOT_FOUND)),
     ];
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
-    state
-        .common_setup
-        .check_operation_hash_status_is_empty(&operation_hash);
-
-    state.common_setup.check_account_single_esdt(
-        OWNER_ADDRESS.to_address(),
-        NATIVE_TEST_TOKEN,
-        0u64,
-        BigUint::zero(),
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        true,
     );
 
-    state.common_setup.check_account_single_esdt(
-        TESTING_SC_ADDRESS.to_address(),
-        NATIVE_TEST_TOKEN,
-        0u64,
-        BigUint::zero(),
-    );
+    let addresses = [OWNER_ADDRESS.to_address(), TESTING_SC_ADDRESS.to_address()];
+    for address in &addresses {
+        state.common_setup.check_account_single_esdt(
+            address.clone(),
+            NATIVE_TEST_TOKEN,
+            0u64,
+            BigUint::zero(),
+        );
+    }
 }
 
 /// ### TEST
@@ -3404,7 +3286,6 @@ fn test_execute_paused_refund() {
     let operation_hash = operation.generate_hash();
     let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
     let (signature, bls_key) = state.common_setup.get_sig_and_pub_keys(1, &hash_of_hashes);
-    let bitmap = state.common_setup.full_bitmap(1);
     let egld_payment = EgldOrEsdtTokenPayment::egld_payment(BigUint::default());
     let payments_vec = PaymentsVec::from(vec![egld_payment]);
 
@@ -3424,21 +3305,19 @@ fn test_execute_paused_refund() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
-    state.common_setup.register_operation(
-        OWNER_ADDRESS,
-        signature,
-        &hash_of_hashes,
-        bitmap,
-        0,
-        MultiValueEncoded::from_iter(vec![operation_hash]),
-    );
-
     let expected_logs = vec![
         log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(ESDT_SAFE_STILL_PAUSED)),
         log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, FIRST_TEST_TOKEN.as_str()]),
     ];
 
-    state.execute_operation(&hash_of_hashes, &operation, expected_logs);
+    state.register_and_execute_operation(
+        &operation,
+        &hash_of_hashes,
+        signature,
+        1,
+        expected_logs,
+        false,
+    );
 
     state.common_setup.check_account_single_esdt(
         ESDT_SAFE_ADDRESS.to_address(),
@@ -3554,30 +3433,26 @@ fn test_execute_operation_partial_execution() {
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .whitebox(mvx_esdt_safe::contract_obj, |sc| {
-            sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                FIRST_TOKEN_ID,
-            ))
-            .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_FIRST_TOKEN_ID.to_token_identifier(),
-            ));
-            sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                SECOND_TOKEN_ID,
-            ))
-            .set(EgldOrEsdtTokenIdentifier::esdt(
-                SOV_SECOND_TOKEN_ID.to_token_identifier(),
-            ));
-            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                SOV_FIRST_TOKEN_ID.to_token_identifier(),
-            ))
-            .set(EgldOrEsdtTokenIdentifier::esdt(
-                FIRST_TOKEN_ID.to_token_identifier(),
-            ));
-            sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
-                SOV_SECOND_TOKEN_ID.to_token_identifier(),
-            ))
-            .set(EgldOrEsdtTokenIdentifier::esdt(
-                SECOND_TOKEN_ID.to_token_identifier(),
-            ));
+            let token_pairs = [
+                (FIRST_TOKEN_ID, SOV_FIRST_TOKEN_ID),
+                (SECOND_TOKEN_ID, SOV_SECOND_TOKEN_ID),
+            ];
+
+            for (mvx_token, sov_token) in token_pairs {
+                sc.multiversx_to_sovereign_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
+                    mvx_token,
+                ))
+                .set(EgldOrEsdtTokenIdentifier::esdt(
+                    sov_token.to_token_identifier(),
+                ));
+
+                sc.sovereign_to_multiversx_token_id_mapper(&EgldOrEsdtTokenIdentifier::esdt(
+                    sov_token.to_token_identifier(),
+                ))
+                .set(EgldOrEsdtTokenIdentifier::esdt(
+                    mvx_token.to_token_identifier(),
+                ));
+            }
         });
 
     state.common_setup.deploy_chain_config(
@@ -3590,27 +3465,20 @@ fn test_execute_operation_partial_execution() {
         ..Default::default()
     };
 
-    let first_payment = OperationEsdtPayment::new(
+    let token_ids = [
         EgldOrEsdtTokenIdentifier::esdt(SOV_FIRST_TOKEN_ID),
-        0,
-        token_data.clone(),
-    );
-
-    let second_payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(TRUSTED_TOKEN),
-        0,
-        token_data.clone(),
-    );
-
-    let third_payment = OperationEsdtPayment::new(
         EgldOrEsdtTokenIdentifier::esdt(SOV_SECOND_TOKEN_ID),
-        0,
-        token_data,
-    );
+    ];
+
+    let payments: Vec<_> = token_ids
+        .iter()
+        .map(|token_id| OperationEsdtPayment::new(token_id.clone(), 0, token_data.clone()))
+        .collect();
 
     let operation = Operation::new(
         USER_ADDRESS.to_managed_address(),
-        vec![first_payment, second_payment, third_payment].into(),
+        payments.into(),
         OperationData::new(
             state.common_setup.next_operation_nonce(),
             USER_ADDRESS.to_managed_address(),
@@ -3638,64 +3506,40 @@ fn test_execute_operation_partial_execution() {
         .common_setup
         .complete_header_verifier_setup_phase(None);
 
+    let expected_logs = vec![
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(DEPOSIT_AMOUNT_NOT_ENOUGH)),
+        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
+    ];
+
     let bitmap = state.common_setup.full_bitmap(1);
-    let epoch = 0;
+    let operations_hashes = MultiValueEncoded::from(ManagedVec::from(vec![operation_hash.clone()]));
 
     state.common_setup.register_operation(
         USER_ADDRESS,
         signature,
         &hash_of_hashes,
         bitmap,
-        epoch,
-        MultiValueEncoded::from_iter(vec![operation_hash]),
+        0,
+        operations_hashes,
     );
-
-    let expected_logs = vec![
-        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: Some(DEPOSIT_AMOUNT_NOT_ENOUGH)),
-        log!(EXECUTE_BRIDGE_OPS_ENDPOINT, topics: [DEPOSIT_EVENT, SOV_FIRST_TOKEN_ID.as_str(), TRUSTED_TOKEN, SOV_SECOND_TOKEN_ID.as_str()]),
-    ];
 
     state.execute_operation(&hash_of_hashes, &operation, expected_logs);
 
-    state.common_setup.check_account_single_esdt(
-        USER_ADDRESS.to_address(),
+    let addresses = [USER_ADDRESS.to_address(), ESDT_SAFE_ADDRESS.to_address()];
+    let tokens = [
         FIRST_TOKEN_ID,
-        0,
-        BigUint::zero(),
-    );
-
-    state.common_setup.check_account_single_esdt(
-        USER_ADDRESS.to_address(),
         SECOND_TOKEN_ID,
-        0,
-        BigUint::zero(),
-    );
-
-    state.common_setup.check_account_single_esdt(
-        USER_ADDRESS.to_address(),
         TestTokenIdentifier::new(TRUSTED_TOKEN),
-        0,
-        BigUint::zero(),
-    );
+    ];
 
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        FIRST_TOKEN_ID,
-        0,
-        BigUint::zero(),
-    );
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        SECOND_TOKEN_ID,
-        0,
-        BigUint::zero(),
-    );
-
-    state.common_setup.check_account_single_esdt(
-        ESDT_SAFE_ADDRESS.to_address(),
-        TestTokenIdentifier::new(TRUSTED_TOKEN),
-        0,
-        BigUint::zero(),
-    );
+    for address in &addresses {
+        for token_id in &tokens {
+            state.common_setup.check_account_single_esdt(
+                address.clone(),
+                *token_id,
+                0,
+                BigUint::zero(),
+            );
+        }
+    }
 }
