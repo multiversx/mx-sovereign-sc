@@ -30,8 +30,9 @@ impl Config {
     }
 
     pub fn chain_simulator_config() -> Self {
+        let port = std::env::var("CHAIN_SIMULATOR_PORT").unwrap_or_else(|_| "8085".to_string());
         Config {
-            gateway_uri: "http://localhost:8085".to_owned(),
+            gateway_uri: format!("http://localhost:{}", port),
             chain_type: ChainType::Simulator,
         }
     }

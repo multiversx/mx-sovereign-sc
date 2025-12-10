@@ -1,15 +1,14 @@
 use common_interactor::{
-    common_sovereign_interactor::CommonInteractorTrait, interactor_common_state::CommonState,
-    interactor_helpers::InteractorHelpers,
+    common_sovereign_interactor::CommonInteractorTrait, interactor_helpers::InteractorHelpers,
 };
-use common_test_setup::base_setup::init::ExpectedLogs;
+use common_test_setup::{base_setup::init::ExpectedLogs, constants::DEPLOY_COST};
 use multiversx_sc_snippets::{
     imports::*, multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256,
 };
 use proxies::mvx_esdt_safe_proxy::MvxEsdtSafeProxy;
 
 use structs::{
-    configs::{EsdtSafeConfig, UpdateEsdtSafeConfigOperation},
+    configs::{EsdtSafeConfig, SovereignConfig, UpdateEsdtSafeConfigOperation},
     generate_hash::GenerateHash,
 };
 
@@ -29,7 +28,6 @@ pub struct MvxEsdtSafeInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
-    pub common_state: CommonState,
 }
 
 impl InteractorHelpers for MvxEsdtSafeInteract {
@@ -39,10 +37,6 @@ impl InteractorHelpers for MvxEsdtSafeInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
-    }
-
-    fn common_state(&mut self) -> &mut CommonState {
-        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
@@ -66,6 +60,17 @@ impl MvxEsdtSafeInteract {
             }
         }
 
+        println!("Deploying and completing setup phase");
+        interactor
+            .deploy_and_complete_setup_phase(
+                OptionalValue::Some(DEPLOY_COST.into()),
+                OptionalValue::Some(SovereignConfig::default_config_for_test()),
+                OptionalValue::None,
+                OptionalValue::None,
+            )
+            .await;
+        println!("Deployed and completed setup phase");
+
         interactor
     }
 
@@ -85,7 +90,6 @@ impl MvxEsdtSafeInteract {
             interactor,
             user_address,
             state: State::default(),
-            common_state: CommonState::load_state(),
         }
     }
 
@@ -104,10 +108,11 @@ impl MvxEsdtSafeInteract {
 
     pub async fn complete_setup_phase(&mut self, shard: u32) {
         let caller = self.get_bridge_owner_for_shard(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         self.interactor
             .tx()
             .from(&caller)
-            .to(self.common_state.get_mvx_esdt_safe_address(shard).clone())
+            .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .complete_setup_phase()
@@ -118,9 +123,10 @@ impl MvxEsdtSafeInteract {
 
     pub async fn upgrade(&mut self) {
         let caller = self.get_bridge_owner_for_shard(SHARD_0).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(SHARD_0).clone();
         self.interactor
             .tx()
-            .to(self.common_state.get_mvx_esdt_safe_address(SHARD_0).clone())
+            .to(mvx_esdt_safe_address)
             .from(caller)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
@@ -139,12 +145,12 @@ impl MvxEsdtSafeInteract {
         expected_log_error: Option<&str>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard);
-        let mvx_esdt_safe_address = self.common_state.get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         let operation: UpdateEsdtSafeConfigOperation<StaticApi> = UpdateEsdtSafeConfigOperation {
             esdt_safe_config,
             nonce: self
-                .common_state()
+                .state()
                 .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
@@ -178,10 +184,11 @@ impl MvxEsdtSafeInteract {
     }
 
     pub async fn set_fee_market_address(&mut self, caller: Address, fee_market_address: Address) {
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(SHARD_0).clone();
         self.interactor
             .tx()
             .from(caller)
-            .to(self.common_state.get_mvx_esdt_safe_address(SHARD_0).clone())
+            .to(mvx_esdt_safe_address)
             .gas(90_000_000u64)
             .typed(MvxEsdtSafeProxy)
             .set_fee_market_address(fee_market_address)
@@ -196,7 +203,7 @@ impl MvxEsdtSafeInteract {
         shard: u32,
         expected_amount: BigUint<StaticApi>,
     ) {
-        let mvx_esdt_safe_address = self.common_state.get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let result = self
             .interactor()
             .query()

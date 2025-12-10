@@ -1,6 +1,5 @@
 #![allow(non_snake_case)]
 
-use common_interactor::interactor_common_state::CommonState;
 use common_interactor::interactor_helpers::InteractorHelpers;
 use common_interactor::interactor_state::{EsdtTokenInfo, State};
 use common_interactor::interactor_structs::{ActionConfig, BalanceCheckConfig};
@@ -9,7 +8,7 @@ use common_interactor::{
 };
 use common_test_setup::base_setup::init::ExpectedLogs;
 use common_test_setup::constants::{
-    DEPOSIT_EVENT, INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SHARD_1,
+    DEPLOY_COST, DEPOSIT_EVENT, INTERACTOR_WORKING_DIR, MULTI_ESDT_NFT_TRANSFER_EVENT, SHARD_1,
     SOVEREIGN_RECEIVER_ADDRESS, TOKEN_DISPLAY_NAME, TOKEN_TICKER,
 };
 use common_test_setup::log;
@@ -19,6 +18,7 @@ use multiversx_sc::api::{ESDT_LOCAL_MINT_FUNC_NAME, ESDT_NFT_CREATE_FUNC_NAME};
 use multiversx_sc::chain_core::EGLD_000000_TOKEN_IDENTIFIER;
 use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use structs::configs::SovereignConfig;
 use structs::fee::FeeStruct;
 use structs::generate_hash::GenerateHash;
 use structs::operation::OperationData;
@@ -28,7 +28,6 @@ pub struct CompleteFlowInteract {
     pub interactor: Interactor,
     pub user_address: Address,
     pub state: State,
-    pub common_state: CommonState,
 }
 
 impl InteractorHelpers for CompleteFlowInteract {
@@ -38,10 +37,6 @@ impl InteractorHelpers for CompleteFlowInteract {
 
     fn state(&mut self) -> &mut State {
         &mut self.state
-    }
-
-    fn common_state(&mut self) -> &mut CommonState {
-        &mut self.common_state
     }
 
     fn user_address(&self) -> &Address {
@@ -64,6 +59,18 @@ impl CompleteFlowInteract {
                 println!("Skipping token initialization for real network");
             }
         }
+
+        println!("Deploying and completing setup phase");
+        interactor
+            .deploy_and_complete_setup_phase(
+                OptionalValue::Some(DEPLOY_COST.into()),
+                OptionalValue::Some(SovereignConfig::default_config_for_test()),
+                OptionalValue::None,
+                OptionalValue::None,
+            )
+            .await;
+        println!("Deployed and completed setup phase");
+
         interactor
     }
 
@@ -83,7 +90,6 @@ impl CompleteFlowInteract {
             interactor,
             user_address,
             state: State::default(),
-            common_state: CommonState::load_state(),
         }
     }
 
@@ -143,8 +149,6 @@ impl CompleteFlowInteract {
             .is_execute(false);
 
         self.check_balances_after_action(balance_config).await;
-        self.update_fee_market_balance_state(fee, payment_vec, config.shard)
-            .await;
     }
 
     async fn register_and_execute_operation(
@@ -221,9 +225,9 @@ impl CompleteFlowInteract {
     }
 
     async fn register_sovereign_token(&mut self, shard: u32, token: EsdtTokenInfo) -> String {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let nonce = self
-            .common_state()
+            .state()
             .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string());
 
         let operation = RegisterTokenOperation {

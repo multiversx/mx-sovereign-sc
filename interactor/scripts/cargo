@@ -1,0 +1,100 @@
+#!/usr/bin/bash
+# Cargo wrapper that intercepts test commands for interactor tests
+# This script is activated by direnv (.envrc) which adds it to PATH
+
+# Ensure basic PATH is set if not already available
+# This is needed when the script is run in environments with minimal PATH (e.g., Flycheck)
+# Always prepend standard system paths to ensure basic commands are available
+STANDARD_PATHS="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+if [ -z "$PATH" ]; then
+    export PATH="$STANDARD_PATHS"
+else
+    # Prepend standard paths (duplicates are harmless, first match wins)
+    export PATH="$STANDARD_PATHS:$PATH"
+fi
+# Add cargo bin if it exists
+if [ -d "$HOME/.cargo/bin" ]; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WRAPPER_SCRIPT="${SCRIPT_DIR}/cargo-test-wrapper.py"
+
+# Configuration
+INTERACTOR_DIR="${INTERACTOR_DIR:-interactor}"
+INTERACTOR_PACKAGE="${INTERACTOR_PACKAGE_NAME:-rust-interact}"
+
+# Determine workspace root - try environment variable first, then find it from script location
+if [ -n "${WORKSPACE_ROOT:-}" ]; then
+    # Use provided WORKSPACE_ROOT
+    :
+elif [ -f "${SCRIPT_DIR}/../../.envrc" ]; then
+    # Find workspace root by looking for .envrc (2 levels up from scripts/)
+    WORKSPACE_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+else
+    # Fallback to current directory
+    WORKSPACE_ROOT="$(pwd)"
+fi
+export WORKSPACE_ROOT
+
+# Function to detect if this is an interactor test
+_is_interactor_test() {
+    local package=""
+    local test_file=""
+    
+    # Parse arguments to find --package and --test
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --package)
+                package="$2"
+                shift 2
+                ;;
+            --test)
+                test_file="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Check if test file is in interactor/tests/ directory
+    if [ -n "$test_file" ]; then
+        local test_path="${WORKSPACE_ROOT}/${INTERACTOR_DIR}/tests/${test_file}.rs"
+        if [ -f "$test_path" ]; then
+            return 0
+        fi
+    fi
+    
+    # Check if package matches interactor package name
+    if [ -n "$package" ] && [ "$package" = "$INTERACTOR_PACKAGE" ]; then
+        return 0
+    fi
+    
+    # Check if current directory is within interactor package
+    if [[ "$(pwd)" == *"/${INTERACTOR_DIR}"* ]]; then
+        return 0
+    fi
+    
+    return 1
+}
+
+# Only intercept cargo test commands
+if [ "$1" = "test" ]; then
+    # Check if this is an interactor test
+    if _is_interactor_test "$@"; then
+        # Debug: log that we're intercepting (can be removed later)
+        if [ -n "${DEBUG_CARGO_WRAPPER:-}" ]; then
+            echo "DEBUG: Cargo wrapper intercepting test command: $@" >&2
+        fi
+        # Route to wrapper script
+        exec "$WRAPPER_SCRIPT" "$@"
+    fi
+fi
+
+# Not an interactor test or not a test command, use normal cargo
+# Find the real cargo command by removing this script's directory from PATH
+ORIGINAL_PATH=$(echo "$PATH" | tr ':' '\n' | grep -v "^${SCRIPT_DIR}$" | tr '\n' ':' | sed 's/:$//')
+PATH="$ORIGINAL_PATH" command cargo "$@"
+

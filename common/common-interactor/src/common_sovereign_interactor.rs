@@ -16,7 +16,6 @@ use common_test_setup::{
 };
 use multiversx_bls::{SecretKey, G1};
 use multiversx_sc::{
-    codec::num_bigint,
     imports::{ESDTSystemSCProxy, OptionalValue, UserBuiltinProxy},
     types::{
         Address, BigUint, CodeMetadata, ESDTSystemSCAddress, EgldOrEsdtTokenIdentifier,
@@ -131,7 +130,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
             match issue.token_ticker.as_str() {
                 "MVX" => self.state().add_fungible_token(token.clone()),
-                "TRUSTED" => self.common_state().set_trusted_token(token_id.clone()),
+                "TRUSTED" => self.state().set_trusted_token(token.clone()),
                 "FEE" => self.state().set_fee_token(token.clone()),
                 "NFT" => self.state().add_nft_token(token.clone()),
                 "SFT" => self.state().add_sft_token(token.clone()),
@@ -207,18 +206,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         ticker: &str,
         decimals: usize,
     ) {
-        if ticker == "FEE" && !self.common_state().fee_market_tokens.is_empty() {
-            let fee_token = self.retrieve_current_fee_token_for_wallet().await;
-            self.state().set_fee_token(fee_token);
-            return;
-        }
-        if ticker == "TRUSTED" && self.common_state().trusted_token.is_some() {
-            let trusted_token = self.retrieve_current_trusted_token_for_wallet().await;
-            self.state().set_trusted_token(trusted_token.clone());
-            self.state()
-                .update_or_add_initial_wallet_token(trusted_token.clone());
-            return;
-        }
         let amount = if matches!(
             token_type,
             EsdtTokenType::NonFungibleV2 | EsdtTokenType::DynamicNFT
@@ -266,7 +253,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state()
+        self.state()
             .set_sovereign_forge_sc_address(new_address_bech32.clone());
 
         new_address
@@ -298,7 +285,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state()
+        self.state()
             .set_chain_factory_sc_address(new_address_bech32);
     }
 
@@ -322,11 +309,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state()
-            .set_chain_config_sc_address(AddressInfo {
-                address: new_address_bech32,
-                chain_id,
-            });
+        self.state().set_chain_config_sc_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
     async fn deploy_template_contracts(
@@ -426,11 +412,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state()
-            .set_header_verifier_address(AddressInfo {
-                address: new_address_bech32,
-                chain_id,
-            });
+        self.state().set_header_verifier_address(AddressInfo {
+            address: new_address_bech32,
+            chain_id,
+        });
     }
 
     async fn deploy_mvx_esdt_safe(
@@ -460,7 +445,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state()
+        self.state()
             .set_mvx_esdt_safe_contract_address(AddressInfo {
                 address: new_address_bech32.clone(),
                 chain_id,
@@ -486,8 +471,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .serialize()
             .expect("Failed to serialize BLS public key");
 
-        self.common_state()
-            .add_bls_secret_key(shard, secret_key_bytes);
+        self.state().add_bls_secret_key(shard, secret_key_bytes);
 
         let bls_key_buffer = ManagedBuffer::<StaticApi>::new_from_bytes(&public_key_bytes);
 
@@ -527,7 +511,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         let new_address_bech32 = Bech32Address::from(&new_address);
-        self.common_state().set_fee_market_address(AddressInfo {
+        self.state().set_fee_market_address(AddressInfo {
             address: new_address_bech32.clone(),
             chain_id,
         });
@@ -550,33 +534,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
         let new_address_bech32 = Bech32Address::from(&new_address);
 
-        self.common_state()
+        self.state()
             .set_testing_sc_address(new_address_bech32.clone());
 
         println!("new testing sc address: {new_address_bech32}");
-    }
-
-    async fn deploy_and_complete_setup_phase(
-        &mut self,
-        deploy_cost: OptionalValue<BigUint<StaticApi>>,
-        optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
-        optional_esdt_safe_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
-    ) {
-        let fee_struct = self.create_standard_fee();
-        self.deploy_and_setup_common(
-            deploy_cost.clone(),
-            optional_sov_config,
-            optional_esdt_safe_config,
-            OptionalValue::Some(fee_struct),
-        )
-        .await;
-        let fee_token_id = self.state().get_fee_token_id();
-        let fee_token_fee_market = self.create_serializable_token(fee_token_id, 0u64);
-        self.common_state()
-            .set_fee_market_token_for_all_shards(fee_token_fee_market);
-        self.common_state().set_fee_status_for_all_shards(true);
-        self.common_state()
-            .set_mvx_egld_balance_for_all_shards(0u64);
     }
 
     async fn unpause_forge(&mut self, sovereign_forge_address: Address) {
@@ -593,7 +554,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
     }
 
-    async fn deploy_and_setup_common(
+    async fn deploy_and_complete_setup_phase(
         &mut self,
         deploy_cost: OptionalValue<BigUint<StaticApi>>,
         optional_sov_config: OptionalValue<SovereignConfig<StaticApi>>,
@@ -610,9 +571,9 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
         self.unpause_forge(sovereign_forge_address.clone()).await;
 
-        let trusted_token = self.common_state().get_trusted_token();
+        let trusted_token = self.state().get_trusted_token_string();
 
-        self.register_trusted_token(initial_caller.clone(), trusted_token.as_str())
+        self.register_trusted_token(initial_caller.clone(), &trusted_token)
             .await;
 
         for shard_id in 0..NUMBER_OF_SHARDS {
@@ -683,11 +644,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn register_trusted_token(&mut self, caller: Address, trusted_token: &str) {
-        let forge_address = &self
-            .common_state()
-            .sovereign_forge_sc_address
-            .clone()
-            .unwrap();
+        let forge_address = &self.state().sovereign_forge_sc_address.clone().unwrap();
 
         self.interactor()
             .tx()
@@ -710,7 +667,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     ) {
         let caller = self.get_sovereign_owner_for_shard(shard);
         let preferred_chain_id = Self::generate_random_chain_id();
-        self.common_state().add_chain_id(preferred_chain_id.clone());
+        self.state().add_chain_id(preferred_chain_id.clone());
         self.deploy_phase_one(
             caller.clone(),
             deploy_cost.clone(),
@@ -718,6 +675,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             optional_sov_config.clone(),
         )
         .await;
+
         let chain_config_address = self.get_chain_config_address(&preferred_chain_id).await;
         self.register_as_validator(
             shard,
@@ -777,10 +735,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         chain_id: &str,
         sc_id: ScArray,
     ) -> Address {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .query()
@@ -798,14 +753,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn register_chain_factory(&mut self, caller: Address, shard_id: u32) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
-        let chain_factory_address = self
-            .common_state()
-            .get_chain_factory_sc_address(shard_id)
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+        let chain_factory_address = self.state().get_chain_factory_sc_address(shard_id).clone();
 
         self.interactor()
             .tx()
@@ -820,10 +769,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn update_smart_contracts_addresses_in_state(&mut self, chain_id: String) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let result_value = self
             .interactor()
@@ -839,31 +785,29 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             let address = Bech32Address::from(contract.address.to_address());
             match contract.id {
                 ScArray::ChainConfig => {
-                    self.common_state()
-                        .set_chain_config_sc_address(AddressInfo {
-                            address,
-                            chain_id: chain_id.clone(),
-                        });
+                    self.state().set_chain_config_sc_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 ScArray::ESDTSafe => {
-                    self.common_state()
+                    self.state()
                         .set_mvx_esdt_safe_contract_address(AddressInfo {
                             address,
                             chain_id: chain_id.clone(),
                         });
                 }
                 ScArray::FeeMarket => {
-                    self.common_state().set_fee_market_address(AddressInfo {
+                    self.state().set_fee_market_address(AddressInfo {
                         address,
                         chain_id: chain_id.clone(),
                     });
                 }
                 ScArray::HeaderVerifier => {
-                    self.common_state()
-                        .set_header_verifier_address(AddressInfo {
-                            address,
-                            chain_id: chain_id.clone(),
-                        });
+                    self.state().set_header_verifier_address(AddressInfo {
+                        address,
+                        chain_id: chain_id.clone(),
+                    });
                 }
                 _ => {}
             }
@@ -871,10 +815,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn get_chain_config_address(&mut self, chain_id: &str) -> Bech32Address {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let result_value = self
             .interactor()
@@ -902,10 +843,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         opt_preferred_chain_id: Option<ManagedBuffer<StaticApi>>,
         opt_config: OptionalValue<SovereignConfig<StaticApi>>,
     ) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         let mut egld_amount = BigUint::default();
 
@@ -916,8 +854,8 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         self.interactor()
             .tx()
             .from(caller)
-            .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .to(sovereign_forge_address.clone())
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_one(opt_preferred_chain_id, opt_config)
             .egld(egld_amount)
@@ -931,15 +869,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         opt_config: OptionalValue<EsdtSafeConfig<StaticApi>>,
         caller: Address,
     ) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
         self.interactor()
             .tx()
             .from(caller)
             .to(sovereign_forge_address)
-            .gas(30_000_000u64)
+            .gas(40_000_000u64)
             .typed(SovereignForgeProxy)
             .deploy_phase_two(opt_config)
             .returns(ReturnsResultUnmanaged)
@@ -952,10 +887,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         caller: Address,
         fee: OptionalValue<FeeStruct<StaticApi>>,
     ) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
@@ -970,10 +902,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn deploy_phase_four(&mut self, caller: Address) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
@@ -988,10 +917,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn complete_setup_phase(&mut self, caller: Address) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
 
         self.interactor()
             .tx()
@@ -1013,8 +939,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -1041,7 +966,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_fee_market_address = self.common_state().get_fee_market_address(shard).clone();
+        let current_fee_market_address = self.state().get_fee_market_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -1062,7 +987,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_fee_market_address = self.common_state().get_fee_market_address(shard).clone();
+        let current_fee_market_address = self.state().get_fee_market_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -1082,17 +1007,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
-
-        if self.common_state().get_is_burn_mechanism_set() {
-            return;
-        }
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         let token_burn_mechanism_operation = SetBurnMechanismOperation {
             token_id,
             nonce: self
-                .common_state()
+                .state()
                 .get_and_increment_operation_nonce(&current_mvx_esdt_safe_address.to_string()),
         };
 
@@ -1120,8 +1040,6 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        self.common_state().set_is_burn_mechanism_set(true);
     }
 
     async fn set_token_lock_mechanism(
@@ -1130,13 +1048,12 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         let token_lock_mechanism_operation = SetLockMechanismOperation {
             token_id,
             nonce: self
-                .common_state()
+                .state()
                 .get_and_increment_operation_nonce(&current_mvx_esdt_safe_address.to_string()),
         };
 
@@ -1164,16 +1081,11 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        self.common_state().set_is_burn_mechanism_set(false);
     }
 
     async fn set_token_burn_mechanism_before_setup_phase(&mut self, caller: Address) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
-        let trusted_token = self.common_state().get_trusted_token();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
+        let trusted_token = self.state().get_trusted_token_string();
 
         self.interactor()
             .tx()
@@ -1189,7 +1101,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn set_special_roles_for_trusted_token(&mut self, for_address: Address) {
         let user_address = self.user_address().clone();
-        let trusted_token = self.common_state().get_trusted_token();
+        let trusted_token = self.state().get_trusted_token_string();
 
         let roles = vec![EsdtLocalRole::Mint, EsdtLocalRole::Burn];
 
@@ -1215,13 +1127,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         operations_hashes: MultiValueEncoded<StaticApi, ManagedBuffer<StaticApi>>,
     ) {
         let bridge_service = self.get_bridge_service_for_shard(shard).clone();
-        let header_verifier_address = self
-            .common_state()
-            .get_header_verifier_address(shard)
-            .clone();
+        let header_verifier_address = self.state().get_header_verifier_address(shard).clone();
 
         let secret_keys = self
-            .common_state()
+            .state()
             .get_bls_secret_keys(shard)
             .cloned()
             .unwrap_or_else(|| panic!("No BLS secret keys registered for shard {shard}"));
@@ -1297,13 +1206,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn switch_pause_status(&mut self, status: bool, shard: u32) {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let bridge_address = self.get_bridge_service_for_shard(shard).clone();
 
         let operation = PauseStatusOperation {
             status,
             nonce: self
-                .common_state()
+                .state()
                 .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
@@ -1339,10 +1248,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn complete_header_verifier_setup_phase(&mut self, caller: Address, shard: u32) {
-        let header_verifier_address = self
-            .common_state()
-            .get_header_verifier_address(shard)
-            .clone();
+        let header_verifier_address = self.state().get_header_verifier_address(shard).clone();
 
         self.interactor()
             .tx()
@@ -1358,10 +1264,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
 
     async fn complete_chain_config_setup_phase(&mut self, shard: u32) {
         let bridge_owner = self.get_bridge_owner_for_shard(shard).clone();
-        let chain_config_address = self
-            .common_state()
-            .current_chain_config_sc_address()
-            .clone();
+        let chain_config_address = self.state().current_chain_config_sc_address().clone();
 
         self.interactor()
             .tx()
@@ -1385,8 +1288,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         expected_log: Option<Vec<ExpectedLogs<'_>>>,
     ) {
         let user_address = self.user_address().clone();
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let (response, logs) = self
             .interactor()
             .tx()
@@ -1413,7 +1315,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         amount: BigUint<StaticApi>,
     ) {
         let user_address = self.user_address().clone();
-        let testing_sc_address = self.common_state().current_testing_sc_address().clone();
+        let testing_sc_address = self.state().current_testing_sc_address().clone();
         self.interactor()
             .tx()
             .from(user_address)
@@ -1434,8 +1336,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         operation: Operation<StaticApi>,
         expected_logs: Vec<ExpectedLogs<'_>>,
     ) {
-        let current_mvx_esdt_safe_address =
-            self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let current_mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let (response, logs) = self
             .interactor()
             .tx()
@@ -1460,7 +1361,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         token: RegisterTokenOperation<StaticApi>,
     ) -> String {
         let user_address = self.user_address().clone();
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let token_hash = token.generate_hash();
         let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&token_hash.to_vec()));
 
@@ -1487,7 +1388,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         shard: u32,
         token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
     ) -> EgldOrEsdtTokenIdentifier<StaticApi> {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let user_address = self.user_address().clone();
         self.interactor()
             .tx()
@@ -1506,7 +1407,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         token_id: EgldOrEsdtTokenIdentifier<StaticApi>,
         nonce: u64,
     ) -> EsdtInfo<StaticApi> {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
         let user_address = self.user_address().clone();
         self.interactor()
             .tx()
@@ -1520,10 +1421,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
     }
 
     async fn check_setup_phase_status(&mut self, chain_id: &str, expected_value: bool) {
-        let sovereign_forge_address = self
-            .common_state()
-            .current_sovereign_forge_sc_address()
-            .clone();
+        let sovereign_forge_address = self.state().current_sovereign_forge_sc_address().clone();
         let result_value = self
             .interactor()
             .query()
@@ -1547,10 +1445,7 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         operation_hash: ManagedBuffer<StaticApi>,
         expected_value: OperationHashStatus,
     ) {
-        let header_verifier_address = self
-            .common_state()
-            .get_header_verifier_address(shard_id)
-            .clone();
+        let header_verifier_address = self.state().get_header_verifier_address(shard_id).clone();
         let response = self
             .interactor()
             .query()
@@ -1602,99 +1497,13 @@ pub trait CommonInteractorTrait: InteractorHelpers {
         }
     }
 
-    async fn retrieve_current_fee_token_for_wallet(&mut self) -> EsdtTokenInfo {
-        let fee_token_id = self
-            .common_state()
-            .fee_market_tokens
-            .get("0")
-            .map(|t| t.token_id.clone())
-            .expect("Fee market token for shard 0 not found");
-
-        let user_address = &self.user_address().clone();
-        let balances = self.interactor().get_account_esdt(user_address).await;
-
-        let amount = if let Some(esdt_balance) = balances.get(&fee_token_id) {
-            BigUint::from(
-                num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
-                    .expect("Failed to parse fee token balance as number"),
-            )
-        } else {
-            BigUint::zero()
-        };
-
-        EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::from(fee_token_id.as_str()),
-            nonce: 0,
-            token_type: EsdtTokenType::Fungible,
-            amount,
-            decimals: 18,
-        }
-    }
-
-    async fn retrieve_current_trusted_token_for_wallet(&mut self) -> EsdtTokenInfo {
-        let user_address = &self.user_address().clone();
-        let balances = self.interactor().get_account_esdt(user_address).await;
-        let trusted_token = self.common_state().get_trusted_token();
-
-        let amount = if let Some(esdt_balance) = balances.get(trusted_token.as_str()) {
-            BigUint::from(
-                num_bigint::BigUint::parse_bytes(esdt_balance.balance.as_bytes(), 10)
-                    .expect("Failed to parse fee token balance as number"),
-            )
-        } else {
-            BigUint::zero()
-        };
-
-        EsdtTokenInfo {
-            token_id: EgldOrEsdtTokenIdentifier::esdt(trusted_token.as_str()),
-            nonce: 0,
-            token_type: EsdtTokenType::Fungible,
-            amount,
-            decimals: 18,
-        }
-    }
-
-    async fn remove_fee_wrapper(&mut self, shard: u32) {
-        let fee_activated = self.common_state().get_fee_status_for_shard(shard);
-
-        if !fee_activated {
-            return;
-        }
-
-        let fee_token = self.state().get_fee_token_identifier();
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
-
-        let operation: RemoveFeeOperation<StaticApi> = RemoveFeeOperation {
-            token_id: fee_token.clone(),
-            nonce: self
-                .common_state()
-                .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
-        };
-
-        let operation_hash = operation.generate_hash();
-        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&operation_hash.to_vec()));
-
-        let operations_hashes = MultiValueEncoded::from_iter(vec![operation_hash.clone()]);
-
-        self.register_operation(shard, &hash_of_hashes, operations_hashes)
-            .await;
-
-        self.remove_fee(hash_of_hashes, operation, shard).await;
-        self.common_state().set_fee_status_for_shard(shard, false);
-    }
-
     async fn set_fee_wrapper(&mut self, fee: FeeStruct<StaticApi>, shard: u32) {
-        let fee_activated = self.common_state().get_fee_status_for_shard(shard);
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
-        if fee_activated {
-            return;
-        }
-
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
         let operation: SetFeeOperation<StaticApi> = SetFeeOperation {
-            fee_struct: fee.clone(),
+            fee_struct: fee,
             nonce: self
-                .common_state()
+                .state()
                 .get_and_increment_operation_nonce(&mvx_esdt_safe_address.to_string()),
         };
 
@@ -1707,11 +1516,10 @@ pub trait CommonInteractorTrait: InteractorHelpers {
             .await;
 
         self.set_fee(hash_of_hashes, operation, shard).await;
-        self.common_state().set_fee_status_for_shard(shard, true);
     }
 
     async fn get_native_token(&mut self, shard: u32) -> EgldOrEsdtTokenIdentifier<StaticApi> {
-        let mvx_esdt_safe_address = self.common_state().get_mvx_esdt_safe_address(shard).clone();
+        let mvx_esdt_safe_address = self.state().get_mvx_esdt_safe_address(shard).clone();
 
         self.interactor()
             .query()

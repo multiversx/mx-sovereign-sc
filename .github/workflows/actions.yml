@@ -24,6 +24,84 @@ jobs:
     with:
       rust-toolchain: 1.87
       coverage-args: --ignore-filename-regex='/.cargo/git' --output ./coverage.md
-      enable-interactor-tests: true
+      enable-interactor-tests: false
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
+
+  interactor-tests:
+    name: Interactor Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.87
+          target: wasm32-unknown-unknown
+
+      - name: Install prerequisites
+        run: |
+          cargo install multiversx-sc-meta
+
+      - name: Build contracts and generate proxies
+        run: |
+          sc-meta all build
+          sc-meta all proxy
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Setup Docker
+        run: |
+          sudo systemctl start docker
+          docker pull multiversx/chainsimulator
+
+      - name: Run first interactor test suite
+        timeout-minutes: 60 
+        env:
+          PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
+          WORKSPACE_ROOT: ${{ github.workspace }}
+          MAX_TEST_CONCURRENCY: "2"
+          GITHUB_ACTIONS: "true"
+        run: |
+          cargo test --package rust-interact --test complete_flow_tests --all-features
+          
+      - name: Cleanup containers after first test suite
+        if: always()
+        run: |
+          # Clean up containers from first test suite before starting second
+          CONTAINERS=$(docker ps -a --filter "name=chain-sim-" --format "{{.ID}}")
+          if [ -n "$CONTAINERS" ]; then
+            echo "Cleaning up containers: $CONTAINERS"
+            docker stop $CONTAINERS
+            docker rm -f $CONTAINERS
+          fi
+          # Wait a moment for ports to be released
+          sleep 2
+
+      - name: Run second interactor test suite
+        timeout-minutes: 60 
+        env:
+          PATH: ${{ github.workspace }}/interactor/scripts:${{ env.PATH }}
+          WORKSPACE_ROOT: ${{ github.workspace }}
+          MAX_TEST_CONCURRENCY: "2"
+          GITHUB_ACTIONS: "true"
+        run: |
+          cargo test --package rust-interact --test mvx_esdt_safe_tests --all-features
+
+      - name: Cleanup chain simulator containers
+        if: always()
+        run: |
+          # Remove only the per-test chain simulator containers created by the wrapper
+          CONTAINERS=$(docker ps -a --filter "name=chain-sim-" --format "{{.ID}}")
+          if [ -n "$CONTAINERS" ]; then
+            echo "Final cleanup of containers: $CONTAINERS"
+            docker stop $CONTAINERS
+            docker rm -f $CONTAINERS
+          fi
+  
