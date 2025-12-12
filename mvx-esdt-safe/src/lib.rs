@@ -1,7 +1,16 @@
 #![no_std]
 
+use error_messages::{
+    ADDRESS_NOT_VALID_SC_ADDRESS, FEE_MARKET_NOT_SET, NATIVE_TOKEN_NOT_REGISTERED,
+    SETUP_PHASE_ALREADY_COMPLETED, SETUP_PHASE_NOT_COMPLETED,
+};
+
 use multiversx_sc::imports::*;
-use structs::configs::EsdtSafeConfig;
+use multiversx_sc_modules::{only_admin, pause};
+use structs::{
+    configs::{EsdtSafeConfig, PauseStatusOperation, UpdateEsdtSafeConfigOperation},
+    generate_hash::GenerateHash,
+};
 
 pub mod bridging_mechanism;
 pub mod deposit;
@@ -16,53 +25,146 @@ pub trait MvxEsdtSafe:
     + register_token::RegisterTokenModule
     + bridging_mechanism::BridgingMechanism
     + cross_chain::deposit_common::DepositCommonModule
-    + cross_chain::events::EventsModule
+    + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::execute_common::ExecuteCommonModule
-    + multiversx_sc_modules::pause::PauseModule
-    + utils::UtilsModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
+    + pause::PauseModule
+    + common_utils::CommonUtilsModule
+    + setup_phase::SetupPhaseModule
+    + only_admin::OnlyAdminModule
 {
     #[init]
     fn init(
         &self,
-        header_verifier_address: ManagedAddress,
+        sovereign_owner: ManagedAddress,
+        sovereign_forge_address: ManagedAddress,
+        sov_token_prefix: ManagedBuffer,
         opt_config: OptionalValue<EsdtSafeConfig<Self::Api>>,
     ) {
-        self.require_sc_address(&header_verifier_address);
-        self.header_verifier_address().set(&header_verifier_address);
-        self.admins().insert(self.blockchain().get_caller());
+        self.validate_chain_id(&sov_token_prefix);
+        self.sov_token_prefix().set(sov_token_prefix);
 
-        self.esdt_safe_config().set(
-            opt_config
-                .into_option()
-                .inspect(|config| self.require_esdt_config_valid(config))
-                .unwrap_or_else(EsdtSafeConfig::default_config),
+        let new_config = self.resolve_esdt_safe_config(opt_config);
+
+        self.add_admin(sovereign_owner);
+        require!(
+            self.blockchain()
+                .is_smart_contract(&sovereign_forge_address),
+            ADDRESS_NOT_VALID_SC_ADDRESS
         );
-
-        self.set_paused(true);
-    }
-
-    #[only_admin]
-    #[endpoint(updateConfiguration)]
-    fn update_configuration(&self, new_config: EsdtSafeConfig<Self::Api>) {
-        self.require_esdt_config_valid(&new_config);
+        self.sovereign_forge_address().set(sovereign_forge_address);
         self.esdt_safe_config().set(new_config);
-    }
-
-    #[only_admin]
-    #[endpoint(setFeeMarketAddress)]
-    fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
-        self.require_sc_address(&fee_market_address);
-        self.fee_market_address().set(fee_market_address);
-    }
-
-    #[only_admin]
-    #[endpoint(setMaxBridgedAmount)]
-    fn set_max_bridged_amount(&self, token_id: TokenIdentifier, max_amount: BigUint) {
-        self.max_bridged_amount(&token_id).set(&max_amount);
+        self.set_paused(true);
     }
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[only_owner]
+    #[endpoint(updateEsdtSafeConfigSetupPhase)]
+    fn update_esdt_safe_config_during_setup_phase(&self, new_config: EsdtSafeConfig<Self::Api>) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+
+        if let Some(error_message) = self.is_esdt_safe_config_valid(&new_config) {
+            sc_panic!(error_message);
+        }
+
+        self.esdt_safe_config().set(new_config);
+    }
+
+    #[endpoint(updateEsdtSafeConfig)]
+    fn update_esdt_safe_config(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        update_config_operation: UpdateEsdtSafeConfigOperation<Self::Api>,
+    ) {
+        let config_hash = update_config_operation.generate_hash();
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &config_hash,
+            update_config_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &config_hash, Some(lock_operation_error));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+        if let Some(error_message) =
+            self.is_esdt_safe_config_valid(&update_config_operation.esdt_safe_config)
+        {
+            self.complete_operation(
+                &hash_of_hashes,
+                &config_hash,
+                Some(ManagedBuffer::from(error_message)),
+            );
+            return;
+        } else {
+            self.esdt_safe_config()
+                .set(update_config_operation.esdt_safe_config);
+            self.complete_operation(&hash_of_hashes, &config_hash, None);
+        }
+    }
+
+    #[endpoint(pauseContract)]
+    fn switch_pause_status(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        pause_status_operation: PauseStatusOperation,
+    ) {
+        let operation_hash = pause_status_operation.generate_hash();
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            pause_status_operation.nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+        if !self.is_setup_phase_complete() {
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+            return;
+        }
+
+        self.set_paused(pause_status_operation.status);
+        self.complete_operation(&hash_of_hashes, &operation_hash, None);
+    }
+
+    #[only_owner]
+    #[endpoint(setFeeMarketAddress)]
+    fn set_fee_market_address(&self, fee_market_address: ManagedAddress) {
+        require!(
+            !self.is_setup_phase_complete(),
+            SETUP_PHASE_ALREADY_COMPLETED
+        );
+        self.require_sc_address(&fee_market_address);
+        self.fee_market_address().set(fee_market_address);
+    }
+
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+
+        require!(!self.native_token().is_empty(), NATIVE_TOKEN_NOT_REGISTERED);
+        require!(!self.fee_market_address().is_empty(), FEE_MARKET_NOT_SET);
+
+        self.unpause_endpoint();
+        self.remove_admin(self.admins().get_by_index(1));
+        self.setup_phase_complete().set(true);
+    }
 }

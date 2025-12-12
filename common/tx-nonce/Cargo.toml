@@ -1,0 +1,14 @@
+[package]
+name = "tx-nonce"
+version = "0.1.0"
+authors = ["andrei-baltariu <andrei.baltariu@multiversx.com>"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "0.63.0"
+
+[dependencies.structs]
+path = "../structs"

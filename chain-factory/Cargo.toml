@@ -12,16 +12,31 @@ path = "src/lib.rs"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.57.1"
+version = "0.63.0"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "0.63.0"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.multiversx-sc-modules]
+version = "0.63.0"
+
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dependencies.chain-config]
 path = "../chain-config"
 
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.structs]
+path = "../common/structs/"
+
 [dependencies.error-messages]
 path = "../common/error-messages"
+
+[dependencies.custom-events]
+path = "../common/custom-events"

@@ -43,12 +43,16 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init(
+    pub fn init<
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
+    >(
         self,
+        sovereign_contracts: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&sovereign_contracts)
             .original_result()
     }
 }
@@ -81,16 +85,28 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn register_bls_pub_keys<
-        Arg0: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
-    >(
+    pub fn complete_setup_phase(
         self,
-        bls_pub_keys: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("registerBlsPubKeys")
-            .argument(&bls_pub_keys)
+            .raw_call("completeSetupPhase")
+            .original_result()
+    }
+
+    pub fn operation_hash_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        operation_hash: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::OperationHashStatus> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("operationHashStatus")
+            .argument(&hash_of_hashes)
+            .argument(&operation_hash)
             .original_result()
     }
 
@@ -98,23 +114,23 @@ where
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<u64>,
         Arg4: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         signature: Arg0,
-        bridge_operations_hash: Arg1,
-        _pub_keys_bitmap: Arg2,
-        _epoch: Arg3,
+        hash_of_hashes: Arg1,
+        pub_keys_bitmap: Arg2,
+        epoch: Arg3,
         operations_hashes: Arg4,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("registerBridgeOps")
             .argument(&signature)
-            .argument(&bridge_operations_hash)
-            .argument(&_pub_keys_bitmap)
-            .argument(&_epoch)
+            .argument(&hash_of_hashes)
+            .argument(&pub_keys_bitmap)
+            .argument(&epoch)
             .argument(&operations_hashes)
             .original_result()
     }
@@ -124,39 +140,26 @@ where
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg5: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg4: ProxyArg<u64>,
+        Arg5: ProxyArg<MultiValueEncoded<Env::Api, BigUint<Env::Api>>>,
     >(
         self,
         signature: Arg0,
-        bridge_operations_hash: Arg1,
+        hash_of_hashes: Arg1,
         operation_hash: Arg2,
-        _pub_keys_bitmap: Arg3,
-        _epoch: Arg4,
-        _pub_keys_id: Arg5,
+        pub_keys_bitmap: Arg3,
+        epoch: Arg4,
+        pub_keys_id: Arg5,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("changeValidatorSet")
             .argument(&signature)
-            .argument(&bridge_operations_hash)
+            .argument(&hash_of_hashes)
             .argument(&operation_hash)
-            .argument(&_pub_keys_bitmap)
-            .argument(&_epoch)
-            .argument(&_pub_keys_id)
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        esdt_safe_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddress")
-            .argument(&esdt_safe_address)
+            .argument(&pub_keys_bitmap)
+            .argument(&epoch)
+            .argument(&pub_keys_id)
             .original_result()
     }
 
@@ -167,7 +170,7 @@ where
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<ManagedBuffer<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("removeExecutedHash")
@@ -179,16 +182,19 @@ where
     pub fn lock_operation_hash<
         Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<u64>,
     >(
         self,
         hash_of_hashes: Arg0,
         operation_hash: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        operation_nonce: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<ManagedBuffer<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("lockOperationHash")
             .argument(&hash_of_hashes)
             .argument(&operation_hash)
+            .argument(&operation_nonce)
             .original_result()
     }
 }

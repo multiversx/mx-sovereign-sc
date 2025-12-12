@@ -1,0 +1,63 @@
+[package]
+name = "sovereign-forge"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "0.63.0"
+
+[dependencies.multiversx-sc-modules]
+version = "0.63.0"
+
+[dependencies.chain-factory]
+path = "../chain-factory"
+
+[dependencies.chain-config]
+path = "../chain-config"
+
+[dependencies.mvx-esdt-safe]
+path = "../mvx-esdt-safe"
+
+[dependencies.cross-chain]
+path = "../common/cross-chain"
+
+[dependencies.header-verifier]
+path = "../header-verifier"
+
+[dependencies.mvx-fee-market]
+path = "../mvx-fee-market"
+
+[dependencies.fee-common]
+path = "../common/fee-common"
+
+[dependencies.proxies]
+path = "../common/proxies"
+
+[dependencies.common-utils]
+path = "../common/common-utils"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
+
+[dependencies.structs]
+path = "../common/structs"
+
+[dependencies.error-messages]
+path = "../common/error-messages"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-modules]
+version = "0.63.0"
+
+[dev-dependencies.common-test-setup]
+path = "../common/common-test-setup"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.63.0"

@@ -9,7 +9,7 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.57.1"
+version = "0.63.0"
 
 [dependencies.structs]
 path = "../common/structs"
@@ -17,8 +17,17 @@ path = "../common/structs"
 [dependencies.proxies]
 path = "../common/proxies"
 
+[dependencies.setup-phase]
+path = "../common/setup-phase"
+
 [dependencies.error-messages]
 path = "../common/error-messages"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
+
+[dependencies.common-utils]
+path = "../common/common-utils"
 
 [dependencies.cross-chain]
 path = "../common/cross-chain"
@@ -27,4 +36,5 @@ path = "../common/cross-chain"
 path = "../common/common-test-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.57.1"
+version = "0.63.0"
+features = ["bls"]

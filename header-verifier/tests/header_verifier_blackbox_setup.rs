@@ -1,16 +1,21 @@
+use common_test_setup::base_setup::init::{AccountSetup, BaseSetup, ExpectedLogs};
+use common_test_setup::base_setup::log_validations::assert_expected_logs;
 use common_test_setup::constants::{
-    ENSHRINE_ADDRESS, HEADER_VERIFIER_ADDRESS, OWNER_ADDRESS, OWNER_BALANCE,
+    CHANGE_VALIDATOR_SET_ENDPOINT, ESDT_SAFE_ADDRESS, EXECUTED_BRIDGE_OP_EVENT,
+    HEADER_VERIFIER_ADDRESS, MVX_ESDT_SAFE_CODE_PATH, OWNER_ADDRESS, OWNER_BALANCE,
 };
-use common_test_setup::{AccountSetup, BaseSetup};
-use multiversx_sc::{
-    api::ManagedTypeApi,
-    types::{ManagedBuffer, MultiValueEncoded, TestAddress},
+use common_test_setup::log;
+use header_verifier::storage::HeaderVerifierStorageModule;
+use multiversx_sc::api::ManagedTypeApi;
+use multiversx_sc::types::{
+    BigUint, ManagedBuffer, MultiValueEncoded, ReturnsHandledOrError, ReturnsResult,
+    ReturnsResultUnmanaged, TestSCAddress,
 };
-use multiversx_sc_scenario::{
-    api::StaticApi, multiversx_chain_vm::crypto_functions::sha256, ScenarioTxRun,
-};
-use multiversx_sc_scenario::{ReturnsHandledOrError, ReturnsLogs};
+use multiversx_sc_scenario::imports::*;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::sha256;
+use multiversx_sc_scenario::DebugApi;
 use proxies::header_verifier_proxy::HeaderverifierProxy;
+use structs::aliases::TxNonce;
 
 #[derive(Clone)]
 pub struct BridgeOperation<M: ManagedTypeApi> {
@@ -27,58 +32,90 @@ impl HeaderVerifierTestState {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let owner_setup = AccountSetup {
-            address: OWNER_ADDRESS,
+            address: OWNER_ADDRESS.to_address(),
+            code_path: None,
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let enshrine_setup = AccountSetup {
-            address: ENSHRINE_ADDRESS,
+        let mvx_setup = AccountSetup {
+            address: ESDT_SAFE_ADDRESS.to_address(),
+            code_path: Some(MVX_ESDT_SAFE_CODE_PATH),
             esdt_balances: None,
             egld_balance: Some(OWNER_BALANCE.into()),
         };
 
-        let account_setups = vec![owner_setup, enshrine_setup];
+        let account_setups = vec![owner_setup, mvx_setup];
 
         let common_setup = BaseSetup::new(account_setups);
 
         Self { common_setup }
     }
 
-    pub fn propose_register_esdt_address(&mut self, esdt_address: TestAddress) {
-        self.common_setup
-            .world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(HEADER_VERIFIER_ADDRESS)
-            .typed(HeaderverifierProxy)
-            .set_esdt_safe_address(esdt_address)
-            .run();
-    }
-
-    pub fn propose_register_operations(&mut self, operation: BridgeOperation<StaticApi>) {
-        self.common_setup
+    pub fn register_operations(
+        &mut self,
+        signature: &ManagedBuffer<StaticApi>,
+        operation: BridgeOperation<StaticApi>,
+        pub_keys_bitmap: ManagedBuffer<StaticApi>,
+        epoch: u64,
+        expected_error_message: Option<&str>,
+    ) {
+        let response = self
+            .common_setup
             .world
             .tx()
             .from(OWNER_ADDRESS)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .register_bridge_operations(
-                operation.signature,
+                signature,
                 operation.bridge_operation_hash,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
+                pub_keys_bitmap,
+                epoch,
                 operation.operations_hashes,
             )
+            .returns(ReturnsHandledOrError::new())
             .run();
+
+        self.common_setup
+            .assert_expected_error_message(response, expected_error_message);
     }
 
-    pub fn propose_remove_executed_hash(
+    pub fn with_header_verifier<F>(&mut self, f: F)
+    where
+        F: FnOnce(header_verifier::ContractObj<DebugApi>),
+    {
+        self.common_setup
+            .world
+            .query()
+            .to(HEADER_VERIFIER_ADDRESS)
+            .whitebox(header_verifier::contract_obj, f);
+    }
+
+    pub fn last_operation_nonce(&mut self) -> TxNonce {
+        let mut nonce: TxNonce = 0;
+        self.with_header_verifier(|sc| {
+            let current = sc.current_execution_nonce().get();
+            nonce = current.saturating_sub(1);
+        });
+        nonce
+    }
+
+    pub fn next_operation_nonce(&mut self) -> TxNonce {
+        self.common_setup.next_operation_nonce()
+    }
+
+    pub fn assert_last_operation_nonce(&mut self, expected: TxNonce) {
+        let actual = self.last_operation_nonce();
+        assert_eq!(actual, expected);
+    }
+
+    pub fn remove_executed_hash(
         &mut self,
-        caller: TestAddress,
+        caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -88,24 +125,21 @@ impl HeaderVerifierTestState {
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
             .remove_executed_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsHandledOrError::new())
-            .run();
+            .returns(ReturnsResult)
+            .run()
+            .into_option();
 
-        match response {
-            Ok(_) => assert!(
-                expected_result.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_result, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_optional_error_message(response, expected_error_message);
     }
 
-    pub fn propose_lock_operation_hash(
+    pub fn lock_operation_hash(
         &mut self,
-        caller: TestAddress,
+        caller: TestSCAddress,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_result: Option<&str>,
+        operation_nonce: TxNonce,
+        expected_error_message: Option<&str>,
     ) {
         let response = self
             .common_setup
@@ -114,26 +148,25 @@ impl HeaderVerifierTestState {
             .from(caller)
             .to(HEADER_VERIFIER_ADDRESS)
             .typed(HeaderverifierProxy)
-            .lock_operation_hash(hash_of_hashes, operation_hash)
-            .returns(ReturnsHandledOrError::new())
-            .run();
+            .lock_operation_hash(hash_of_hashes, operation_hash, operation_nonce)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .into_option();
 
-        match response {
-            Ok(_) => assert!(
-                expected_result.is_none(),
-                "Transaction was successful, but expected error"
-            ),
-            Err(error) => assert_eq!(expected_result, Some(error.message.as_str())),
-        };
+        self.common_setup
+            .assert_optional_error_message(response, expected_error_message);
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn change_validator_set(
         &mut self,
         signature: &ManagedBuffer<StaticApi>,
         hash_of_hashes: &ManagedBuffer<StaticApi>,
         operation_hash: &ManagedBuffer<StaticApi>,
-        expected_error_message: Option<&str>,
-        expected_custom_log: Option<&str>,
+        epoch: u64,
+        pub_keys_bitmap: &ManagedBuffer<StaticApi>,
+        validator_set: MultiValueEncoded<StaticApi, BigUint<StaticApi>>,
+        execution_error: Option<&str>,
     ) {
         let (logs, response) = self
             .common_setup
@@ -146,20 +179,22 @@ impl HeaderVerifierTestState {
                 signature,
                 hash_of_hashes,
                 operation_hash,
-                ManagedBuffer::new(),
-                ManagedBuffer::new(),
-                MultiValueEncoded::new(),
+                pub_keys_bitmap,
+                epoch,
+                validator_set,
             )
             .returns(ReturnsLogs)
             .returns(ReturnsHandledOrError::new())
             .run();
 
         self.common_setup
-            .assert_expected_error_message(response, expected_error_message);
+            .assert_expected_error_message(response, None);
 
-        if let Some(custom_log) = expected_custom_log {
-            self.common_setup.assert_expected_log(logs, custom_log)
-        };
+        let expected_logs = vec![
+            log!(CHANGE_VALIDATOR_SET_ENDPOINT, topics: [EXECUTED_BRIDGE_OP_EVENT], data: execution_error),
+        ];
+
+        assert_expected_logs(logs, expected_logs);
     }
 
     pub fn generate_bridge_operation_struct(
@@ -175,29 +210,12 @@ impl HeaderVerifierTestState {
             bridge_operations.push(operation_hash.clone());
         }
 
-        let hash_of_hashes = self.get_operation_hash(&appended_hashes);
+        let hash_of_hashes = ManagedBuffer::new_from_bytes(&sha256(&appended_hashes.to_vec()));
 
         BridgeOperation {
             signature: ManagedBuffer::new(),
             bridge_operation_hash: hash_of_hashes,
             operations_hashes: bridge_operations,
         }
-    }
-
-    pub fn get_operation_hash(
-        &mut self,
-        operation: &ManagedBuffer<StaticApi>,
-    ) -> ManagedBuffer<StaticApi> {
-        let mut array = [0; 1024];
-
-        let len = {
-            let byte_array = operation.load_to_byte_array(&mut array);
-            byte_array.len()
-        };
-
-        let trimmed_slice = &array[..len];
-        let hash = sha256(trimmed_slice);
-
-        ManagedBuffer::from(&hash)
     }
 }

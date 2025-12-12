@@ -9,10 +9,13 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "0.63.0"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.57.1"
+version = "0.63.0"
+
+[dependencies.proxies]
+path = "../common/proxies"

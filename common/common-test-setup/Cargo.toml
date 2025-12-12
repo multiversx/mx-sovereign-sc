@@ -6,8 +6,18 @@ edition = "2021"
 [lib]
 path = "src/lib.rs"
 
+[dependencies]
+rand_core = "0.6.4"
+rand = "0.8.5"
+hex = "0.4.3"
+base64 = "0.21"
+
+[dependencies.multiversx-sc]
+version = "0.63.0"
+
 [dependencies.multiversx-sc-scenario]
-version = "0.57.1"
+version = "0.63.0"
+features = ["bls"]
 
 [dependencies.proxies]
 path = "../proxies"
@@ -18,8 +28,8 @@ path = "../structs"
 [dependencies.cross-chain]
 path = "../cross-chain"
 
-[dependencies.fee-market]
-path = "../../fee-market"
+[dependencies.mvx-fee-market]
+path = "../../mvx-fee-market"
 
 [dependencies.header-verifier]
 path = "../../header-verifier"
@@ -32,3 +42,15 @@ path = "../../testing-sc"
 
 [dependencies.mvx-esdt-safe]
 path = "../../mvx-esdt-safe"
+
+[dependencies.chain-factory]
+path = "../../chain-factory"
+
+[dependencies.sovereign-forge]
+path = "../../sovereign-forge"
+
+[dependencies.sov-fee-market]
+path = "../../sov-fee-market"
+
+[dependencies.error-messages]
+path = "../error-messages"

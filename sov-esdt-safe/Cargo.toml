@@ -9,25 +9,34 @@ authors = ["you"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.57.1"
+version = "0.63.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.57.1"
+version = "0.63.0"
 
 [dependencies.testing-sc]
 path = "../testing-sc"
 
-[dependencies.utils]
-path = "../common/utils"
+[dependencies.common-utils]
+path = "../common/common-utils"
 
-[dependencies.fee-market]
-path = "../fee-market"
+[dependencies.fee-common]
+path = "../common/fee-common"
+
+[dependencies.mvx-fee-market]
+path = "../mvx-fee-market"
 
 [dependencies.structs]
 path = "../common/structs"
 
 [dependencies.cross-chain]
 path = "../common/cross-chain"
+
+[dependencies.tx-nonce]
+path = "../common/tx-nonce"
+
+[dependencies.custom-events]
+path = "../common/custom-events"
 
 [dependencies.setup-phase]
 path = "../common/setup-phase"
@@ -42,4 +51,4 @@ path = "../common/error-messages"
 path = "../common/common-test-setup"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.57.1"
+version = "0.63.0"

@@ -1,0 +1,88 @@
+use multiversx_sc_scenario::{
+    imports::{ReturnsHandledOrError, ReturnsResultUnmanaged},
+    ScenarioTxRun,
+};
+use proxies::{
+    chain_config_proxy::ChainConfigContractProxy, header_verifier_proxy::HeaderverifierProxy,
+    mvx_esdt_safe_proxy::MvxEsdtSafeProxy, mvx_fee_market_proxy::MvxFeeMarketProxy,
+    sovereign_forge_proxy::SovereignForgeProxy,
+};
+
+use crate::{
+    base_setup::init::BaseSetup,
+    constants::{
+        CHAIN_CONFIG_ADDRESS, ESDT_SAFE_ADDRESS, FEE_MARKET_ADDRESS, HEADER_VERIFIER_ADDRESS,
+        OWNER_ADDRESS, SOVEREIGN_FORGE_SC_ADDRESS,
+    },
+};
+
+impl BaseSetup {
+    pub fn complete_header_verifier_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(HEADER_VERIFIER_ADDRESS)
+            .typed(HeaderverifierProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn complete_fee_market_setup_phase(&mut self) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(FEE_MARKET_ADDRESS)
+            .typed(MvxFeeMarketProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.change_ownership_to_header_verifier(FEE_MARKET_ADDRESS);
+
+        self.assert_expected_error_message(response, None);
+    }
+
+    pub fn complete_sovereign_forge_setup_phase(&mut self, expected_error_message: Option<&str>) {
+        let response = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(SOVEREIGN_FORGE_SC_ADDRESS)
+            .typed(SovereignForgeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(response, expected_error_message);
+    }
+
+    pub fn complete_chain_config_setup_phase(&mut self) {
+        let transaction = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(CHAIN_CONFIG_ADDRESS)
+            .typed(ChainConfigContractProxy)
+            .complete_setup_phase()
+            .returns(ReturnsHandledOrError::new())
+            .run();
+
+        self.assert_expected_error_message(transaction, None);
+    }
+
+    pub fn complete_mvx_esdt_safe_setup_phase(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(MvxEsdtSafeProxy)
+            .complete_setup_phase()
+            .returns(ReturnsResultUnmanaged)
+            .run();
+    }
+}

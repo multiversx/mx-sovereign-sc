@@ -8,7 +8,6 @@
 #![allow(clippy::all)]
 
 use multiversx_sc::proxy_imports::*;
-use structs::configs::{EsdtSafeConfig, SovereignConfig};
 
 pub struct ChainFactoryContractProxy;
 
@@ -55,7 +54,7 @@ where
         sovereign_forge_address: Arg0,
         chain_config_template: Arg1,
         header_verifier_template: Arg2,
-        cross_chain_operation_template: Arg3,
+        mvx_esdt_safe_template: Arg3,
         fee_market_template: Arg4,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
@@ -64,7 +63,7 @@ where
             .argument(&sovereign_forge_address)
             .argument(&chain_config_template)
             .argument(&header_verifier_template)
-            .argument(&cross_chain_operation_template)
+            .argument(&mvx_esdt_safe_template)
             .argument(&fee_market_template)
             .original_result()
     }
@@ -99,91 +98,53 @@ where
     Gas: TxGas<Env>,
 {
     pub fn deploy_sovereign_chain_config_contract<
-        Arg0: ProxyArg<SovereignConfig<Env::Api>>,
+        Arg0: ProxyArg<OptionalValue<structs::configs::SovereignConfig<Env::Api>>>,
     >(
         self,
-        config: Arg0,
+        opt_config: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deploySovereignChainConfigContract")
-            .argument(&config)
+            .argument(&opt_config)
             .original_result()
     }
 
     pub fn deploy_header_verifier<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg0: ProxyArg<MultiValueEncoded<Env::Api, structs::forge::ContractInfo<Env::Api>>>,
     >(
         self,
-        chain_config_address: Arg0,
+        sovereign_contracts: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("deployHeaderVerifier")
-            .argument(&chain_config_address)
+            .argument(&sovereign_contracts)
             .original_result()
     }
 
-    pub fn set_esdt_safe_address_in_header_verifier<
+    pub fn deploy_mvx_esdt_safe<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        header_verifier: Arg0,
-        esdt_safe_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddressInHeaderVerifier")
-            .argument(&header_verifier)
-            .argument(&esdt_safe_address)
-            .original_result()
-    }
-
-    pub fn deploy_enshrine_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<Option<EsdtSafeConfig<Env::Api>>>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-        token_handler_address: Arg1,
-        wegld_identifier: Arg2,
-        sov_token_prefix: Arg3,
-        opt_config: Arg4,
+        sovereign_owner: Arg0,
+        sov_token_prefix: Arg1,
+        opt_config: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("deployEnshrineEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .argument(&token_handler_address)
-            .argument(&wegld_identifier)
+            .raw_call("deployEsdtSafe")
+            .argument(&sovereign_owner)
             .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
     }
 
-    pub fn deploy_esdt_safe<
-        Arg0: ProxyArg<bool>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        is_sovereign_chain: Arg0,
-        header_verifier_address: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("deployEsdtSafe")
-            .argument(&is_sovereign_chain)
-            .argument(&header_verifier_address)
-            .original_result()
-    }
-
     pub fn deploy_fee_market<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<Option<super::fee_market_proxy::FeeStruct<Env::Api>>>,
+        Arg1: ProxyArg<Option<structs::fee::FeeStruct<Env::Api>>>,
     >(
         self,
         esdt_safe_address: Arg0,
@@ -197,12 +158,39 @@ where
             .original_result()
     }
 
-    pub fn complete_setup_phase(
+    pub fn chain_config_template(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("completeSetupPhase")
+            .raw_call("getChainConfigTemplateAddress")
+            .original_result()
+    }
+
+    pub fn header_verifier_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getHeaderVerifierTemplateAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeTemplateAddress")
+            .original_result()
+    }
+
+    pub fn fee_market_template(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFeeMarketTemplateAddress")
             .original_result()
     }
 
@@ -251,6 +239,156 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getAdmins")
+            .original_result()
+    }
+
+    pub fn update_esdt_safe_config<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
+    >(
+        self,
+        esdt_safe_address: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateEsdtSafeConfig")
+            .argument(&esdt_safe_address)
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_sovereign_config<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SovereignConfig<Env::Api>>,
+    >(
+        self,
+        chain_config_address: Arg0,
+        new_config: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateSovereignConfig")
+            .argument(&chain_config_address)
+            .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn set_fee<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<structs::fee::FeeStruct<Env::Api>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        new_fee: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFee")
+            .argument(&fee_market_address)
+            .argument(&new_fee)
+            .original_result()
+    }
+
+    pub fn remove_fee<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeFee")
+            .argument(&fee_market_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn add_users_to_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUsersToWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn remove_users_from_whitelist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        fee_market_address: Arg0,
+        users: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeUsersFromWhitelistSetupPhase")
+            .argument(&fee_market_address)
+            .argument(&users)
+            .original_result()
+    }
+
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenBurnMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_esdt_safe_address: Arg0,
+        token_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanismSetupPhase")
+            .argument(&mvx_esdt_safe_address)
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn complete_setup_phase<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        chain_config_address: Arg0,
+        header_verifier_address: Arg1,
+        mvx_esdt_safe_address: Arg2,
+        fee_market_address: Arg3,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("completeSetupPhase")
+            .argument(&chain_config_address)
+            .argument(&header_verifier_address)
+            .argument(&mvx_esdt_safe_address)
+            .argument(&fee_market_address)
             .original_result()
     }
 }

@@ -45,16 +45,22 @@ where
 {
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg3: ProxyArg<OptionalValue<structs::configs::EsdtSafeConfig<Env::Api>>>,
     >(
         self,
-        header_verifier_address: Arg0,
-        opt_config: Arg1,
+        sovereign_owner: Arg0,
+        sovereign_forge_address: Arg1,
+        sov_token_prefix: Arg2,
+        opt_config: Arg3,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&header_verifier_address)
+            .argument(&sovereign_owner)
+            .argument(&sovereign_forge_address)
+            .argument(&sov_token_prefix)
             .argument(&opt_config)
             .original_result()
     }
@@ -88,7 +94,7 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn update_configuration<
+    pub fn update_esdt_safe_config_during_setup_phase<
         Arg0: ProxyArg<structs::configs::EsdtSafeConfig<Env::Api>>,
     >(
         self,
@@ -96,8 +102,40 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("updateConfiguration")
+            .raw_call("updateEsdtSafeConfigSetupPhase")
             .argument(&new_config)
+            .original_result()
+    }
+
+    pub fn update_esdt_safe_config<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::UpdateEsdtSafeConfigOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        update_config_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateEsdtSafeConfig")
+            .argument(&hash_of_hashes)
+            .argument(&update_config_operation)
+            .original_result()
+    }
+
+    pub fn switch_pause_status<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::PauseStatusOperation>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        pause_status_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseContract")
+            .argument(&hash_of_hashes)
+            .argument(&pause_status_operation)
             .original_result()
     }
 
@@ -114,19 +152,12 @@ where
             .original_result()
     }
 
-    pub fn set_max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
+    pub fn complete_setup_phase(
         self,
-        token_id: Arg0,
-        max_amount: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setMaxBridgedAmount")
-            .argument(&token_id)
-            .argument(&max_amount)
+            .raw_call("completeSetupPhase")
             .original_result()
     }
 
@@ -161,27 +192,19 @@ where
             .original_result()
     }
 
-    pub fn register_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<EsdtTokenType>,
-        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg3: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg4: ProxyArg<usize>,
+    pub fn register_sovereign_token<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::RegisterTokenOperation<Env::Api>>,
     >(
         self,
-        sov_token_id: Arg0,
-        token_type: Arg1,
-        token_display_name: Arg2,
-        token_ticker: Arg3,
-        num_decimals: Arg4,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        hash_of_hashes: Arg0,
+        register_token_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("registerToken")
-            .argument(&sov_token_id)
-            .argument(&token_type)
-            .argument(&token_display_name)
-            .argument(&token_ticker)
-            .argument(&num_decimals)
+            .argument(&hash_of_hashes)
+            .argument(&register_token_operation)
             .original_result()
     }
 
@@ -190,61 +213,151 @@ where
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
     >(
         self,
-        token_ticker: Arg0,
-        token_name: Arg1,
+        ticker: Arg0,
+        name: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("registerNativeToken")
-            .argument(&token_ticker)
-            .argument(&token_name)
+            .argument(&ticker)
+            .argument(&name)
             .original_result()
     }
 
-    pub fn set_token_burn_mechanism<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    pub fn set_token_burn_mechanism_setup_phase<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
     >(
         self,
         token_id: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
+            .raw_call("setTokenBurnMechanismSetupPhase")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_token_burn_mechanism<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SetBurnMechanismOperation<Env::Api>>,
+    >(
+        self,
+        hash_of_hashes: Arg0,
+        set_burn_mechanism_operation: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
             .raw_call("setTokenBurnMechanism")
+            .argument(&hash_of_hashes)
+            .argument(&set_burn_mechanism_operation)
+            .original_result()
+    }
+
+    pub fn set_token_lock_mechanism_setup_phase<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTokenLockMechanismSetupPhase")
             .argument(&token_id)
             .original_result()
     }
 
     pub fn set_token_lock_mechanism<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<structs::configs::SetLockMechanismOperation<Env::Api>>,
     >(
         self,
-        token_id: Arg0,
+        hash_of_hashes: Arg0,
+        set_lock_mechanism_operation: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("setTokenLockMechanism")
-            .argument(&token_id)
+            .argument(&hash_of_hashes)
+            .argument(&set_lock_mechanism_operation)
+            .original_result()
+    }
+
+    pub fn deposited_tokens_amount<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_identifier: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDepositedTokensAmount")
+            .argument(&token_identifier)
+            .original_result()
+    }
+
+    pub fn sovereign_to_multiversx_token_id_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        sov_token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovToMvxTokenId")
+            .argument(&sov_token_id)
+            .original_result()
+    }
+
+    pub fn multiversx_to_sovereign_token_id_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+    >(
+        self,
+        mvx_token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMvxToSovTokenId")
+            .argument(&mvx_token_id)
+            .original_result()
+    }
+
+    pub fn sovereign_to_multiversx_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSovEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
+            .original_result()
+    }
+
+    pub fn multiversx_to_sovereign_esdt_info_mapper<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        token_identifier: Arg0,
+        nonce: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, structs::EsdtInfo<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMvxEsdtTokenInfo")
+            .argument(&token_identifier)
+            .argument(&nonce)
             .original_result()
     }
 
     pub fn native_token(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EgldOrEsdtTokenIdentifier<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getNativeToken")
-            .original_result()
-    }
-
-    pub fn max_bridged_amount<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMaxBridgedAmount")
-            .argument(&token_id)
             .original_result()
     }
 

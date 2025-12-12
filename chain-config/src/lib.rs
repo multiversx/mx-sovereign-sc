@@ -1,50 +1,50 @@
 #![no_std]
 
-use error_messages::INVALID_MIN_MAX_VALIDATOR_NUMBERS;
-use validator_rules::TokenIdAmountPair;
+use multiversx_sc::imports::*;
+use structs::configs::SovereignConfig;
 
 multiversx_sc::imports!();
 
-pub mod bridge;
-pub mod validator_rules;
-
-pub type StakeMultiArg<M> = MultiValue2<TokenIdentifier<M>, BigUint<M>>;
+pub mod config_utils;
+pub mod configs;
+pub mod storage;
+pub mod validator;
 
 #[multiversx_sc::contract]
 pub trait ChainConfigContract:
-    bridge::BridgeModule
-    + validator_rules::ValidatorRulesModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
+    validator::ValidatorModule
+    + storage::ChainConfigStorageModule
+    + config_utils::ChainConfigUtilsModule
+    + configs::ConfigsModule
+    + setup_phase::SetupPhaseModule
+    + common_utils::CommonUtilsModule
+    + custom_events::CustomEventsModule
 {
     #[init]
-    fn init(
-        &self,
-        min_validators: usize,
-        max_validators: usize,
-        min_stake: BigUint,
-        admin: ManagedAddress,
-        additional_stake_required: MultiValueEncoded<StakeMultiArg<Self::Api>>,
-    ) {
-        require!(
-            min_validators <= max_validators,
-            INVALID_MIN_MAX_VALIDATOR_NUMBERS
-        );
+    fn init(&self, opt_config: OptionalValue<SovereignConfig<Self::Api>>) {
+        let new_config = match opt_config {
+            OptionalValue::Some(cfg) => {
+                if let Some(error_message) = self.is_new_config_valid(&cfg) {
+                    sc_panic!(error_message);
+                }
+                cfg
+            }
+            OptionalValue::None => SovereignConfig::default_config(),
+        };
 
-        let mut additional_stake_vec = ManagedVec::new();
-        for multi_value in additional_stake_required {
-            let (token_id, amount) = multi_value.into_tuple();
-            let value = TokenIdAmountPair { token_id, amount };
-
-            additional_stake_vec.push(value);
-        }
-
-        self.min_validators().set(min_validators);
-        self.max_validators().set(max_validators);
-        self.min_stake().set(min_stake);
-        self.add_admin(admin);
-        self.additional_stake_required().set(additional_stake_vec);
+        self.sovereign_config().set(new_config.clone());
     }
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[only_owner]
+    #[endpoint(completeSetupPhase)]
+    fn complete_setup_phase(&self) {
+        if self.is_setup_phase_complete() {
+            return;
+        }
+        self.require_validator_set_valid(self.bls_keys_map().len());
+        self.setup_phase_complete().set(true);
+    }
 }

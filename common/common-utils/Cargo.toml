@@ -1,0 +1,23 @@
+[package]
+name = "common-utils"
+version = "0.1.0"
+authors = ["Dorin Iancu <dorin.iancu@multiversx.com>"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.error-messages]
+path = "../error-messages"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.custom-events]
+path = "../custom-events"
+
+[dependencies.multiversx-sc]
+version = "0.63.0"

@@ -1,7 +1,13 @@
-use error_messages::ESDT_SAFE_STILL_PAUSED;
+use cross_chain::MAX_GAS_PER_TRANSACTION;
+use error_messages::{
+    CREATE_ESDT_FAILED, DEPOSIT_AMOUNT_NOT_ENOUGH, ESDT_SAFE_STILL_PAUSED, GAS_LIMIT_TOO_HIGH,
+    NOTHING_TO_TRANSFER, TOKEN_NOT_REGISTERED,
+};
+use multiversx_sc_modules::only_admin;
 use structs::{
     aliases::GasLimit,
-    operation::{Operation, OperationData, OperationEsdtPayment, OperationTuple},
+    generate_hash::GenerateHash,
+    operation::{Operation, OperationData, OperationEsdtPayment, TransferData},
 };
 
 multiversx_sc::imports!();
@@ -12,132 +18,148 @@ const ESDT_TRANSACTION_GAS: GasLimit = 5_000_000;
 pub trait ExecuteModule:
     crate::bridging_mechanism::BridgingMechanism
     + crate::register_token::RegisterTokenModule
-    + utils::UtilsModule
-    + cross_chain::events::EventsModule
+    + common_utils::CommonUtilsModule
+    + setup_phase::SetupPhaseModule
+    + custom_events::CustomEventsModule
     + cross_chain::storage::CrossChainStorage
     + cross_chain::deposit_common::DepositCommonModule
     + cross_chain::execute_common::ExecuteCommonModule
     + multiversx_sc_modules::pause::PauseModule
-    + multiversx_sc_modules::only_admin::OnlyAdminModule
+    + only_admin::OnlyAdminModule
 {
     #[endpoint(executeBridgeOps)]
     fn execute_operations(&self, hash_of_hashes: ManagedBuffer, operation: Operation<Self::Api>) {
-        require!(self.not_paused(), ESDT_SAFE_STILL_PAUSED);
-
-        let operation_hash = self.calculate_operation_hash(&operation);
-
-        self.lock_operation_hash(&operation_hash, &hash_of_hashes);
-
-        let operation_tuple = OperationTuple {
-            op_hash: operation_hash,
-            operation: operation.clone(),
-        };
-
-        if operation.tokens.is_empty() {
-            self.execute_sc_call(&hash_of_hashes, &operation_tuple);
-
+        let operation_hash = operation.generate_hash();
+        if let Some(lock_operation_error) = self.lock_operation_hash_wrapper(
+            &hash_of_hashes,
+            &operation_hash,
+            operation.data.op_nonce,
+        ) {
+            self.complete_operation(&hash_of_hashes, &operation_hash, Some(lock_operation_error));
+            return;
+        }
+        if self.is_paused() {
+            let refund_result = self.refund_transfers(&operation.tokens, &operation);
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(self.merge_error_if_any(ESDT_SAFE_STILL_PAUSED.into(), refund_result)),
+            );
             return;
         }
 
-        if let Some(minted_operation_tokens) = self.mint_tokens(&hash_of_hashes, &operation_tuple) {
-            self.distribute_payments(&hash_of_hashes, &operation_tuple, &minted_operation_tokens);
+        if operation.tokens.is_empty() {
+            if let Err(err_msg) = self.execute_sc_call(&hash_of_hashes, &operation_hash, &operation)
+            {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+            }
+            return;
+        };
+
+        let minted_operation_tokens = match self.process_operation_payments(&operation) {
+            Ok(tokens) => tokens,
+            Err(err_msg) => {
+                self.complete_operation(&hash_of_hashes, &operation_hash, Some(err_msg));
+                return;
+            }
+        };
+
+        if let Err(err_msg) = self.distribute_payments(
+            &hash_of_hashes,
+            &operation_hash,
+            &operation,
+            &minted_operation_tokens,
+        ) {
+            let refund_result = self.refund_transfers(&minted_operation_tokens, &operation);
+            self.complete_operation(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(self.merge_error_if_any(err_msg, refund_result)),
+            );
+            return;
         }
     }
 
-    fn mint_tokens(
+    fn process_operation_payments(
         &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) -> Option<ManagedVec<OperationEsdtPayment<Self::Api>>> {
+        operation: &Operation<Self::Api>,
+    ) -> Result<ManagedVec<OperationEsdtPayment<Self::Api>>, ManagedBuffer> {
         let mut output_payments = ManagedVec::new();
-
-        for operation_token in operation_tuple.operation.tokens.iter() {
-            match self.get_mvx_token_id(&operation_token) {
-                Some(mvx_token_id) => {
-                    let payment = self.process_resolved_token(&mvx_token_id, &operation_token);
-                    output_payments.push(payment);
-                }
-                None => {
-                    if let Some(payment) = self.process_unresolved_token(
-                        hash_of_hashes,
-                        operation_tuple,
-                        &operation_token,
-                    ) {
-                        output_payments.push(payment);
+        for operation_token in operation.tokens.iter() {
+            let processing_result = match self.get_mvx_token_id(&operation_token) {
+                Ok(mvx_token_id) => {
+                    if mvx_token_id.is_none() {
+                        self.process_unresolved_token(&operation_token)
                     } else {
-                        return None;
+                        self.process_resolved_token(&mvx_token_id.unwrap(), &operation_token)
                     }
                 }
-            }
+                Err(err_msg) => return Err(err_msg),
+            };
+            match processing_result {
+                Ok(payment) => output_payments.push(payment),
+                Err(err_msg) => {
+                    let refund_result = self.refund_transfers(&output_payments, operation);
+                    return Err(self.merge_error_if_any(err_msg, refund_result));
+                }
+            };
         }
 
-        Some(output_payments)
+        Ok(output_payments)
     }
 
     fn process_resolved_token(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> OperationEsdtPayment<Self::Api> {
+    ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
+        let mut nonce: u64 = 0;
         if self.is_fungible(&operation_token.token_data.token_type) {
-            self.mint_fungible_token(mvx_token_id, &operation_token.token_data.amount);
-            OperationEsdtPayment::new(mvx_token_id.clone(), 0, operation_token.token_data.clone())
+            self.try_esdt_local_mint(
+                &mvx_token_id.clone().unwrap_esdt(),
+                0,
+                &operation_token.token_data.amount,
+            )?;
         } else {
-            let nft_nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token);
-            OperationEsdtPayment::new(
-                mvx_token_id.clone(),
-                nft_nonce,
-                operation_token.token_data.clone(),
-            )
+            nonce = self.esdt_create_and_update_mapper(mvx_token_id, operation_token)?;
         }
+
+        Ok(OperationEsdtPayment::new(
+            mvx_token_id.clone(),
+            nonce,
+            operation_token.token_data.clone(),
+        ))
     }
 
     fn process_unresolved_token(
         &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<OperationEsdtPayment<Self::Api>> {
-        if self.is_fungible(&operation_token.token_data.token_type)
-            && self
-                .burn_mechanism_tokens()
-                .contains(&operation_token.token_identifier)
-        {
+    ) -> Result<OperationEsdtPayment<Self::Api>, ManagedBuffer> {
+        if self.is_burn_mechanism_set(operation_token) {
             let deposited_mapper = self.deposited_tokens_amount(&operation_token.token_identifier);
             let deposited_amount = deposited_mapper.get();
 
             if operation_token.token_data.amount > deposited_amount {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
-                self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
-
-                return None;
+                return Err(DEPOSIT_AMOUNT_NOT_ENOUGH.into());
             }
 
-            deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
-            self.mint_fungible_token(
-                &operation_token.token_identifier,
+            self.try_esdt_local_mint(
+                &operation_token.token_identifier.clone().unwrap_esdt(),
+                0,
                 &operation_token.token_data.amount,
-            );
+            )?;
+            deposited_mapper.update(|amount| *amount -= operation_token.token_data.amount.clone());
         }
 
-        Some(operation_token.clone())
-    }
-
-    fn mint_fungible_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.tx()
-            .to(ToSelf)
-            .typed(UserBuiltinProxy)
-            .esdt_local_mint(token_id, 0, amount)
-            .sync_call();
+        Ok(operation_token.clone())
     }
 
     fn esdt_create_and_update_mapper(
-        self,
-        mvx_token_id: &TokenIdentifier<Self::Api>,
+        &self,
+        mvx_token_id: &EgldOrEsdtTokenIdentifier,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> u64 {
+    ) -> Result<u64, ManagedBuffer> {
         let mut nonce = 0;
-
         let current_token_type_ref = &operation_token.token_data.token_type;
 
         if self.is_sft_or_meta(current_token_type_ref) {
@@ -148,40 +170,42 @@ pub trait ExecuteModule:
         }
 
         if nonce == 0 {
-            nonce = self.mint_nft_tx(mvx_token_id, &operation_token.token_data);
-
+            let new_nonce = self.create_esdt(mvx_token_id, &operation_token.token_data)?;
             self.update_esdt_info_mappers(
                 &operation_token.token_identifier,
                 operation_token.token_nonce,
                 mvx_token_id,
-                nonce,
+                new_nonce,
             );
-        } else {
-            self.tx()
-                .to(ToSelf)
-                .typed(system_proxy::UserBuiltinProxy)
-                .esdt_local_mint(mvx_token_id, nonce, &operation_token.token_data.amount)
-                .sync_call();
+            return Ok(new_nonce);
         }
 
-        nonce
+        self.try_esdt_local_mint(
+            &mvx_token_id.clone().unwrap_esdt(),
+            nonce,
+            &operation_token.token_data.amount,
+        )?;
+
+        Ok(nonce)
     }
 
-    fn mint_nft_tx(
+    fn create_esdt(
         &self,
-        mvx_token_id: &TokenIdentifier,
+        token_id: &EgldOrEsdtTokenIdentifier,
         token_data: &EsdtTokenData<Self::Api>,
-    ) -> u64 {
+    ) -> Result<u64, ManagedBuffer> {
         let mut amount = token_data.amount.clone();
         if self.is_sft_or_meta(&token_data.token_type) {
             amount += BigUint::from(1u32);
         }
 
-        self.tx()
+        let esdt_token_id = token_id.clone().unwrap_esdt();
+        let result = self
+            .tx()
             .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
+            .typed(UserBuiltinProxy)
             .esdt_nft_create(
-                mvx_token_id,
+                esdt_token_id.clone(),
                 &amount,
                 &token_data.name,
                 &token_data.royalties,
@@ -189,186 +213,259 @@ pub trait ExecuteModule:
                 &token_data.attributes,
                 &token_data.uris,
             )
-            .returns(ReturnsResult)
-            .sync_call()
+            .returns(ReturnsHandledOrError::new().returns(ReturnsResult))
+            .sync_call_fallible();
+
+        match result {
+            Ok(nonce) => Ok(nonce),
+            Err(error_code) => {
+                Err(self.format_error(CREATE_ESDT_FAILED, esdt_token_id, error_code))
+            }
+        }
     }
 
     fn distribute_payments(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-        tokens_list: &ManagedVec<OperationEsdtPayment<Self::Api>>,
-    ) {
-        let mapped_tokens: ManagedVec<Self::Api, EsdtTokenPayment<Self::Api>> = tokens_list
-            .iter()
-            .map(|token| token.clone().into())
-            .collect();
+        operation_hash: &ManagedBuffer,
+        operation: &Operation<Self::Api>,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+    ) -> Result<(), ManagedBuffer> {
+        let payment_tokens: ManagedVec<Self::Api, EgldOrEsdtTokenPayment<Self::Api>> =
+            output_payments
+                .iter()
+                .map(|token| token.clone().into())
+                .collect();
 
-        match &operation_tuple.operation.data.opt_transfer_data {
+        match &operation.data.opt_transfer_data {
             Some(transfer_data) => {
+                self.validate_transfer_data(transfer_data)?;
                 let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
                 self.tx()
-                    .to(&operation_tuple.operation.to)
+                    .to(&operation.to)
                     .raw_call(transfer_data.function.clone())
                     .arguments_raw(args)
-                    .payment(&mapped_tokens)
+                    .payment(payment_tokens)
                     .gas(transfer_data.gas_limit)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        hash_of_hashes,
+                        operation_hash,
+                        operation,
+                        output_payments,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
             None => {
                 self.tx()
-                    .to(&operation_tuple.operation.to)
-                    .multi_esdt(mapped_tokens)
+                    .to(&operation.to)
+                    .payment(&payment_tokens)
                     .gas(ESDT_TRANSACTION_GAS)
-                    .callback(
-                        <Self as ExecuteModule>::callbacks(self)
-                            .execute(hash_of_hashes, operation_tuple),
-                    )
+                    .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                        hash_of_hashes,
+                        operation_hash,
+                        operation,
+                        output_payments,
+                    ))
                     .gas_for_callback(CALLBACK_GAS)
                     .register_promise();
             }
         }
+
+        Ok(())
     }
 
     fn execute_sc_call(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        let transfer_data = operation_tuple
-            .operation
-            .data
-            .opt_transfer_data
-            .as_ref()
-            .unwrap();
+        operation_hash: &ManagedBuffer,
+        operation: &Operation<Self::Api>,
+    ) -> Result<(), ManagedBuffer> {
+        let transfer_data = match operation.data.opt_transfer_data.as_ref() {
+            Some(data) => data,
+            None => return Err(NOTHING_TO_TRANSFER.into()),
+        };
+
+        self.validate_transfer_data(transfer_data)?;
+
         let args = ManagedArgBuffer::from(transfer_data.args.clone());
 
         self.tx()
-            .to(&operation_tuple.operation.to)
+            .to(&operation.to)
             .raw_call(transfer_data.function.clone())
             .arguments_raw(args)
             .gas(transfer_data.gas_limit)
-            .callback(
-                <Self as ExecuteModule>::callbacks(self).execute(hash_of_hashes, operation_tuple),
-            )
+            .callback(<Self as ExecuteModule>::callbacks(self).execute(
+                hash_of_hashes,
+                operation_hash,
+                operation,
+                &ManagedVec::new(),
+            ))
             .gas_for_callback(CALLBACK_GAS)
             .register_promise();
+
+        Ok(())
     }
 
     #[promises_callback]
     fn execute(
         &self,
         hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
+        operation_hash: &ManagedBuffer<Self::Api>,
+        operation: &Operation<Self::Api>,
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
         #[call_result] result: ManagedAsyncCallResult<IgnoreValue>,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(_) => {
-                self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
+                self.complete_operation(hash_of_hashes, operation_hash, None);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                self.emit_transfer_failed_events(hash_of_hashes, operation_tuple);
+            ManagedAsyncCallResult::Err(err) => {
+                let refund_result = self.refund_transfers(output_payments, operation);
+                let merged_err_message = self.merge_error_if_any(err.err_msg, refund_result);
+
+                self.complete_operation(hash_of_hashes, operation_hash, Some(merged_err_message));
             }
         }
-
-        self.remove_executed_hash(hash_of_hashes, &operation_tuple.op_hash);
     }
 
-    fn emit_transfer_failed_events(
+    fn refund_transfers(
         &self,
-        hash_of_hashes: &ManagedBuffer,
-        operation_tuple: &OperationTuple<Self::Api>,
-    ) {
-        self.execute_bridge_operation_event(hash_of_hashes, &operation_tuple.op_hash);
-
-        if operation_tuple.operation.tokens.is_empty() {
-            return;
+        output_payments: &ManagedVec<OperationEsdtPayment<Self::Api>>,
+        operation: &Operation<Self::Api>,
+    ) -> Result<(), ManagedBuffer> {
+        if output_payments.is_empty() {
+            return Ok(());
         }
 
-        for operation_token in &operation_tuple.operation.tokens {
-            self.burn_failed_transfer_token(&operation_token);
+        let mut burn_errors = ManagedVec::new();
+
+        for i in 0..output_payments.len() {
+            match self.burn_failed_transfer_token(&output_payments.get(i), &operation.tokens.get(i))
+            {
+                Ok(_) => {
+                    if self.is_burn_mechanism_set(&output_payments.get(i)) {
+                        self.deposited_tokens_amount(&output_payments.get(i).token_identifier)
+                            .update(|amount| {
+                                *amount += output_payments.get(i).token_data.amount.clone()
+                            });
+                    }
+                }
+                Err(err_msg) => {
+                    burn_errors.push(err_msg);
+                }
+            }
         }
 
         let sc_address = self.blockchain().get_sc_address();
-        let tx_nonce = self.get_and_save_next_tx_id();
+        let tx_nonce = self.get_current_and_increment_tx_nonce();
         self.deposit_event(
-            &operation_tuple.operation.data.op_sender,
-            &operation_tuple
-                .operation
-                .map_tokens_to_multi_value_encoded(),
+            &operation.data.op_sender,
+            &operation.map_tokens_to_multi_value_encoded(),
             OperationData::new(tx_nonce, sc_address.clone(), None),
         );
+
+        if !burn_errors.is_empty() {
+            return Err(self.combine_error_messages(&burn_errors));
+        }
+        Ok(())
     }
 
-    fn burn_failed_transfer_token(&self, operation_token: &OperationEsdtPayment<Self::Api>) {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
-
-        if sov_to_mvx_mapper.is_empty() {
-            return;
+    fn burn_failed_transfer_token(
+        &self,
+        output_payment: &OperationEsdtPayment<Self::Api>,
+        operation_token: &OperationEsdtPayment<Self::Api>,
+    ) -> Result<(), ManagedBuffer> {
+        let mvx_to_sov_mapper =
+            self.multiversx_to_sovereign_token_id_mapper(&output_payment.token_identifier);
+        if mvx_to_sov_mapper.is_empty() && !self.is_native_token(&output_payment.token_identifier) {
+            return Ok(());
         }
 
-        let mvx_token_id = sov_to_mvx_mapper.get();
-        let mut mvx_token_nonce = 0;
+        let esdt_token_id = output_payment.token_identifier.clone().unwrap_esdt();
+        self.try_esdt_local_burn(
+            &esdt_token_id,
+            output_payment.token_nonce,
+            &output_payment.token_data.amount,
+        )?;
 
-        if operation_token.token_nonce > 0 {
-            mvx_token_nonce = self
-                .sovereign_to_multiversx_esdt_info_mapper(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                )
-                .get()
-                .token_nonce;
+        if self.is_nft(&operation_token.token_data.token_type) {
+            self.clear_mvx_to_sov_esdt_info_mapper(
+                &output_payment.token_identifier,
+                output_payment.token_nonce,
+            );
+            self.clear_sov_to_mvx_esdt_info_mapper(
+                &operation_token.token_identifier,
+                operation_token.token_nonce,
+            );
+        }
 
-            if self.is_nft(&operation_token.token_data.token_type) {
-                self.clear_sov_to_mvx_esdt_info_mapper(
-                    &operation_token.token_identifier,
-                    operation_token.token_nonce,
-                );
-                self.clear_mvx_to_sov_esdt_info_mapper(&mvx_token_id, mvx_token_nonce);
+        Ok(())
+    }
+
+    fn merge_error_if_any(
+        &self,
+        outer_error: ManagedBuffer,
+        result: Result<(), ManagedBuffer>,
+    ) -> ManagedBuffer {
+        match result {
+            Ok(()) => outer_error,
+            Err(refund_err) => {
+                let mut errors: ManagedVec<Self::Api, ManagedBuffer> = ManagedVec::new();
+                errors.push(outer_error);
+                errors.push(refund_err);
+                self.combine_error_messages(&errors)
             }
         }
-
-        self.tx()
-            .to(ToSelf)
-            .typed(system_proxy::UserBuiltinProxy)
-            .esdt_local_burn(
-                &mvx_token_id,
-                mvx_token_nonce,
-                &operation_token.token_data.amount,
-            )
-            .sync_call();
     }
 
     fn get_mvx_token_id(
         &self,
         operation_token: &OperationEsdtPayment<Self::Api>,
-    ) -> Option<TokenIdentifier<Self::Api>> {
-        let sov_to_mvx_mapper =
-            self.sovereign_to_multiversx_token_id_mapper(&operation_token.token_identifier);
+    ) -> Result<Option<EgldOrEsdtTokenIdentifier>, ManagedBuffer> {
+        let token_identifier = &operation_token.token_identifier;
+        let registered_mapping = self.sovereign_to_multiversx_token_id_mapper(token_identifier);
 
-        if !sov_to_mvx_mapper.is_empty() {
-            return Some(sov_to_mvx_mapper.get());
+        if !registered_mapping.is_empty() {
+            return Ok(Some(registered_mapping.get()));
         }
 
-        if self.is_native_token(&operation_token.token_identifier) {
-            Some(operation_token.token_identifier.clone())
-        } else {
-            None
+        if self.has_prefix(token_identifier) {
+            return Err(TOKEN_NOT_REGISTERED.into());
         }
+
+        if self.is_native_token(token_identifier) {
+            return Ok(Some(token_identifier.clone()));
+        }
+
+        Ok(None)
     }
 
-    fn get_mvx_nonce_from_mapper(self, token_id: &TokenIdentifier, nonce: u64) -> u64 {
+    fn get_mvx_nonce_from_mapper(&self, token_id: &EgldOrEsdtTokenIdentifier, nonce: u64) -> u64 {
         let esdt_info_mapper = self.sovereign_to_multiversx_esdt_info_mapper(token_id, nonce);
         if esdt_info_mapper.is_empty() {
             return 0;
         }
         esdt_info_mapper.get().token_nonce
+    }
+
+    #[inline]
+    fn is_burn_mechanism_set(&self, operation_token: &OperationEsdtPayment<Self::Api>) -> bool {
+        self.is_fungible(&operation_token.token_data.token_type)
+            && self
+                .burn_mechanism_tokens()
+                .contains(&operation_token.token_identifier)
+    }
+
+    fn validate_transfer_data(
+        &self,
+        transfer_data: &TransferData<Self::Api>,
+    ) -> Result<(), ManagedBuffer> {
+        if transfer_data.gas_limit > MAX_GAS_PER_TRANSACTION {
+            return Err(GAS_LIMIT_TOO_HIGH.into());
+        }
+
+        Ok(())
     }
 }

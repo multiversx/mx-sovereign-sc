@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            5
+// Endpoints:                           21
 // Async Callback (empty):               1
-// Total number of exported functions:   8
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -21,10 +21,26 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         deploySovereignChainConfigContract => deploy_sovereign_chain_config_contract
-        blacklistSovereignChainSc => blacklist_sovereign_chain_sc
-        getDeployCost => deploy_cost
-        slash => slash
-        distributeSlashed => distribute_slashed
+        deployHeaderVerifier => deploy_header_verifier
+        deployEsdtSafe => deploy_mvx_esdt_safe
+        deployFeeMarket => deploy_fee_market
+        getChainConfigTemplateAddress => chain_config_template
+        getHeaderVerifierTemplateAddress => header_verifier_template
+        getEsdtSafeTemplateAddress => esdt_safe_template
+        getFeeMarketTemplateAddress => fee_market_template
+        isAdmin => is_admin
+        addAdmin => add_admin
+        removeAdmin => remove_admin
+        getAdmins => admins
+        updateEsdtSafeConfig => update_esdt_safe_config
+        updateSovereignConfig => update_sovereign_config
+        setFee => set_fee
+        removeFee => remove_fee
+        addUsersToWhitelistSetupPhase => add_users_to_whitelist
+        removeUsersFromWhitelistSetupPhase => remove_users_from_whitelist
+        setTokenBurnMechanismSetupPhase => set_token_burn_mechanism
+        setTokenLockMechanismSetupPhase => set_token_lock_mechanism
+        completeSetupPhase => complete_setup_phase
     )
 }
 

@@ -1,6 +1,11 @@
 use aliases::{GasLimit, OptionalValueTransferDataTuple, TxId};
+use multiversx_sc::api::CryptoApi;
 
-use crate::aliases::{self, EventPaymentTuple, TransferDataTuple};
+use crate::{
+    aliases::{self, EventPaymentTuple, TransferDataTuple},
+    events::EventPayment,
+    generate_hash::GenerateHash,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -12,6 +17,8 @@ pub struct Operation<M: ManagedTypeApi> {
     pub tokens: ManagedVec<M, OperationEsdtPayment<M>>,
     pub data: OperationData<M>,
 }
+
+impl<A: CryptoApi> GenerateHash<A> for Operation<A> {}
 
 impl<M: ManagedTypeApi> Operation<M> {
     #[inline]
@@ -27,14 +34,12 @@ impl<M: ManagedTypeApi> Operation<M> {
         let mut tuples = MultiValueEncoded::new();
 
         for token in &self.tokens {
-            tuples.push(
-                (
-                    token.token_identifier.clone(),
-                    token.token_nonce,
-                    token.token_data.clone(),
-                )
-                    .into(),
-            );
+            let event_payment: EventPaymentTuple<M> = EventPaymentTuple::from(EventPayment {
+                identifier: token.token_identifier.clone(),
+                nonce: token.token_nonce,
+                data: token.token_data.clone(),
+            });
+            tuples.push(event_payment);
         }
 
         tuples
@@ -107,15 +112,8 @@ impl<M: ManagedTypeApi> OperationData<M> {
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
-pub struct OperationTuple<M: ManagedTypeApi> {
-    pub op_hash: ManagedBuffer<M>,
-    pub operation: Operation<M>,
-}
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct OperationEsdtPayment<M: ManagedTypeApi> {
-    pub token_identifier: TokenIdentifier<M>,
+    pub token_identifier: EgldOrEsdtTokenIdentifier<M>,
     pub token_nonce: u64,
     pub token_data: EsdtTokenData<M>,
 }
@@ -123,7 +121,7 @@ pub struct OperationEsdtPayment<M: ManagedTypeApi> {
 impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
     #[inline]
     pub fn new(
-        token_identifier: TokenIdentifier<M>,
+        token_identifier: EgldOrEsdtTokenIdentifier<M>,
         token_nonce: u64,
         token_data: EsdtTokenData<M>,
     ) -> Self {
@@ -135,10 +133,10 @@ impl<M: ManagedTypeApi> OperationEsdtPayment<M> {
     }
 }
 
-impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
+impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EgldOrEsdtTokenPayment<M> {
     #[inline]
     fn from(payment: OperationEsdtPayment<M>) -> Self {
-        EsdtTokenPayment {
+        EgldOrEsdtTokenPayment {
             token_identifier: payment.token_identifier,
             token_nonce: payment.token_nonce,
             amount: payment.token_data.amount,
@@ -149,16 +147,9 @@ impl<M: ManagedTypeApi> From<OperationEsdtPayment<M>> for EsdtTokenPayment<M> {
 impl<M: ManagedTypeApi> Default for OperationEsdtPayment<M> {
     fn default() -> Self {
         OperationEsdtPayment {
-            token_identifier: TokenIdentifier::from(ManagedBuffer::new()),
+            token_identifier: EgldOrEsdtTokenIdentifier::from(ManagedBuffer::new()),
             token_nonce: 0,
             token_data: EsdtTokenData::default(),
         }
-    }
-}
-
-impl<M: ManagedTypeApi> OperationTuple<M> {
-    #[inline]
-    pub fn new(op_hash: ManagedBuffer<M>, operation: Operation<M>) -> Self {
-        OperationTuple { op_hash, operation }
     }
 }

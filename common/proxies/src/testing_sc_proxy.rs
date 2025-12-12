@@ -92,4 +92,36 @@ where
             .argument(&value)
             .original_result()
     }
+
+    pub fn read_native_token<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        wanted_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("read_native_token")
+            .argument(&wanted_address)
+            .original_result()
+    }
+
+    pub fn send_tokens<
+        Arg0: ProxyArg<EgldOrEsdtTokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        nonce: Arg1,
+        amount: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("send_tokens")
+            .argument(&token_id)
+            .argument(&nonce)
+            .argument(&amount)
+            .original_result()
+    }
 }

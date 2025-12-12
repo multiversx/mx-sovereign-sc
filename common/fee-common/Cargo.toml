@@ -1,0 +1,29 @@
+[package]
+name = "fee-common"
+version = "0.1.0"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "0.63.0"
+
+[dependencies.multiversx-sc-modules]
+version = "0.63.0"
+
+[dependencies.structs]
+path = "../structs"
+
+[dependencies.proxies]
+path = "../proxies"
+
+[dependencies.common-utils]
+path = "../common-utils"
+
+[dependencies.error-messages]
+path = "../error-messages"
+
+[dependencies.custom-events]
+path = "../custom-events"

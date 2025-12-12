@@ -1,0 +1,12 @@
+[package]
+name = "sovereign-forge-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies.sovereign-forge]
+path = ".."
+
+[dependencies.multiversx-sc-meta-lib]
+default-features = false
+version = "0.63.0"

@@ -1,0 +1,2 @@
+[[proxy]]
+path = "../common/proxies/src/chain_factory_proxy.rs"

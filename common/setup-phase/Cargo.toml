@@ -5,10 +5,16 @@ authors = ["dorin-iancu <dorin.iancu@multiversx.com>"]
 edition = "2021"
 
 [dependencies.multiversx-sc]
-version = "=0.57.1"
+version = "0.63.0"
 
 [dependencies.error-messages]
 path = "../error-messages"
 
+[dependencies.common-utils]
+path = "../common-utils"
+
+[dependencies.custom-events]
+path = "../custom-events"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.57.1"
+version = "0.63.0"

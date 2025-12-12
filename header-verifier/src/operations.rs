@@ -1,0 +1,228 @@
+use error_messages::{
+    CALLER_NOT_FROM_CURRENT_SOVEREIGN, CURRENT_OPERATION_ALREADY_IN_EXECUTION,
+    CURRENT_OPERATION_NOT_REGISTERED, HASH_OF_HASHES_DOES_NOT_MATCH, INCORRECT_OPERATION_NONCE,
+    INVALID_EPOCH, NO_VALIDATORS_FOR_GIVEN_EPOCH, NO_VALIDATORS_FOR_PREVIOUS_EPOCH,
+    OUTGOING_TX_HASH_ALREADY_REGISTERED, SETUP_PHASE_NOT_COMPLETED,
+    VALIDATORS_ALREADY_REGISTERED_IN_EPOCH,
+};
+use structs::{aliases::TxNonce, OperationHashStatus};
+
+use crate::{
+    checks,
+    header_utils::{self, MAX_STORED_EPOCHS},
+    storage,
+};
+multiversx_sc::imports!();
+
+#[multiversx_sc::module]
+pub trait HeaderVerifierOperationsModule:
+    header_utils::HeaderVerifierUtilsModule
+    + storage::HeaderVerifierStorageModule
+    + checks::HeaderVerifierChecksModule
+    + custom_events::CustomEventsModule
+    + setup_phase::SetupPhaseModule
+    + common_utils::CommonUtilsModule
+{
+    #[endpoint(registerBridgeOps)]
+    fn register_bridge_operations(
+        &self,
+        signature: ManagedBuffer,
+        hash_of_hashes: ManagedBuffer,
+        pub_keys_bitmap: ManagedBuffer,
+        epoch: u64,
+        operations_hashes: MultiValueEncoded<ManagedBuffer>,
+    ) {
+        require!(self.is_setup_phase_complete(), SETUP_PHASE_NOT_COMPLETED);
+        require!(
+            !self.is_bls_pub_keys_empty(epoch),
+            NO_VALIDATORS_FOR_GIVEN_EPOCH
+        );
+
+        let bls_pub_keys_mapper = self.bls_pub_keys(epoch);
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+
+        require!(
+            !self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper),
+            OUTGOING_TX_HASH_ALREADY_REGISTERED
+        );
+        require!(
+            self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
+                .is_ok(),
+            HASH_OF_HASHES_DOES_NOT_MATCH
+        );
+
+        self.verify_bls(
+            epoch,
+            &signature,
+            &hash_of_hashes,
+            pub_keys_bitmap,
+            bls_pub_keys_mapper.len(),
+        );
+
+        for operation_hash in operations_hashes {
+            self.operation_hash_status(&hash_of_hashes, &operation_hash)
+                .set(OperationHashStatus::NotLocked);
+        }
+
+        hash_of_hashes_history_mapper.insert(hash_of_hashes);
+    }
+
+    #[endpoint(changeValidatorSet)]
+    fn change_validator_set(
+        &self,
+        signature: ManagedBuffer,
+        hash_of_hashes: ManagedBuffer,
+        operation_hash: ManagedBuffer,
+        pub_keys_bitmap: ManagedBuffer,
+        epoch: u64,
+        pub_keys_id: MultiValueEncoded<BigUint<Self::Api>>,
+    ) {
+        if !self.is_setup_phase_complete() {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(SETUP_PHASE_NOT_COMPLETED.into()),
+            );
+
+            return;
+        }
+
+        if epoch == 0 {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(INVALID_EPOCH.into()),
+            );
+
+            return;
+        }
+
+        if !self.is_bls_pub_keys_empty(epoch) {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(VALIDATORS_ALREADY_REGISTERED_IN_EPOCH.into()),
+            );
+
+            return;
+        }
+
+        if self.is_bls_pub_keys_empty(epoch - 1) {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(NO_VALIDATORS_FOR_PREVIOUS_EPOCH.into()),
+            );
+
+            return;
+        }
+
+        let bls_keys_previous_epoch = self.bls_pub_keys(epoch - 1);
+        let mut hash_of_hashes_history_mapper = self.hash_of_hashes_history();
+        if self.is_hash_of_hashes_registered(&hash_of_hashes, &hash_of_hashes_history_mapper) {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(OUTGOING_TX_HASH_ALREADY_REGISTERED.into()),
+            );
+
+            return;
+        }
+
+        let mut operations_hashes = MultiValueEncoded::new();
+        operations_hashes.push(operation_hash.clone());
+
+        if let Err(error_message) =
+            self.calculate_and_check_transfers_hashes(&hash_of_hashes, operations_hashes.clone())
+        {
+            self.execute_bridge_operation_event(
+                &hash_of_hashes,
+                &operation_hash,
+                Some(error_message),
+            );
+
+            return;
+        }
+
+        self.verify_bls(
+            epoch - 1, // Use the validator signatures from the last epoch
+            &signature,
+            &hash_of_hashes,
+            pub_keys_bitmap,
+            bls_keys_previous_epoch.len(),
+        );
+
+        if epoch >= MAX_STORED_EPOCHS && !self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).is_empty() {
+            self.bls_pub_keys(epoch - MAX_STORED_EPOCHS).clear();
+        }
+
+        match self.get_bls_keys_by_id(pub_keys_id) {
+            Ok(new_bls_keys) => self.bls_pub_keys(epoch).extend(new_bls_keys),
+            Err(error_message) => {
+                self.execute_bridge_operation_event(
+                    &hash_of_hashes,
+                    &operation_hash,
+                    Some(error_message.into()),
+                );
+
+                return;
+            }
+        }
+
+        hash_of_hashes_history_mapper.insert(hash_of_hashes.clone());
+        self.execute_bridge_operation_event(&hash_of_hashes, &operation_hash, None);
+    }
+
+    #[endpoint(removeExecutedHash)]
+    fn remove_executed_hash(
+        &self,
+        hash_of_hashes: &ManagedBuffer,
+        operation_hash: &ManagedBuffer,
+    ) -> OptionalValue<ManagedBuffer> {
+        if !self.is_caller_from_current_sovereign() {
+            return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
+        }
+
+        self.operation_hash_status(hash_of_hashes, operation_hash)
+            .clear();
+
+        OptionalValue::None
+    }
+
+    #[endpoint(lockOperationHash)]
+    fn lock_operation_hash(
+        &self,
+        hash_of_hashes: ManagedBuffer,
+        operation_hash: ManagedBuffer,
+        operation_nonce: TxNonce,
+    ) -> OptionalValue<ManagedBuffer> {
+        if !self.is_caller_from_current_sovereign() {
+            return OptionalValue::Some(CALLER_NOT_FROM_CURRENT_SOVEREIGN.into());
+        }
+
+        let operation_hash_status_mapper =
+            self.operation_hash_status(&hash_of_hashes, &operation_hash);
+
+        if self.is_hash_status_mapper_empty(&operation_hash_status_mapper) {
+            return OptionalValue::Some(CURRENT_OPERATION_NOT_REGISTERED.into());
+        }
+
+        let is_hash_in_execution = operation_hash_status_mapper.get();
+        match is_hash_in_execution {
+            OperationHashStatus::Locked => {
+                return OptionalValue::Some(CURRENT_OPERATION_ALREADY_IN_EXECUTION.into());
+            }
+            OperationHashStatus::NotLocked => {
+                let last_nonce = self.current_execution_nonce().get();
+                if operation_nonce != last_nonce {
+                    sc_panic!(INCORRECT_OPERATION_NONCE);
+                }
+
+                operation_hash_status_mapper.set(OperationHashStatus::Locked);
+                self.current_execution_nonce().set(operation_nonce + 1);
+            }
+        }
+
+        OptionalValue::None
+    }
+}
